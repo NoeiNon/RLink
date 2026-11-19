@@ -41,7 +41,10 @@ class _JoinServerScreenState extends State<JoinServerScreen> {
     });
 
     try {
-      final server = await MockServerStore.findByToken(_tokenController.text);
+      final server = await MockServerStore.join(
+        token: _tokenController.text,
+        username: widget.username,
+      );
       if (!mounted) return;
 
       Navigator.of(context).pushAndRemoveUntil(

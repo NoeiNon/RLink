@@ -42,6 +42,7 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
     try {
       final server = await MockServerStore.create(
         name: _nameController.text,
+        username: widget.username,
         colorIndex: _colorIndex,
         iconIndex: _iconIndex,
       );
@@ -58,6 +59,12 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
           ),
         ),
         (route) => false,
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
       );
     } catch (_) {
       if (!mounted) return;

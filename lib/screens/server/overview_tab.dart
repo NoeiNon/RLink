@@ -2,20 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/app_theme.dart';
+import '../../data/mock_server_store.dart';
 import '../../models/server.dart';
+import '../../models/server_content.dart';
 import '../../widgets/auth_layout.dart';
-import '../../widgets/page_body.dart';
+import '../../widgets/server_avatar.dart';
 
-class _Stat {
-  const _Stat(this.label, this.value);
-
-  final String label;
-  final String value;
-}
-
-/// Tab Beranda server. Admin melihat token server (untuk disalin dan dikirim
-/// ke teman), builder tidak. Angka statistik masih 0 sampai fitur project ada.
-class OverviewTab extends StatelessWidget {
+/// Tab Beranda = obrolan (Discussion) server. Admin dan builder melihat
+/// obrolan yang sama; bedanya, admin punya strip token di bagian atas.
+class OverviewTab extends StatefulWidget {
   const OverviewTab({
     super.key,
     required this.username,
@@ -27,173 +22,239 @@ class OverviewTab extends StatelessWidget {
   final ServerInfo server;
   final ServerRole role;
 
-  bool get _isAdmin => role == ServerRole.admin;
+  @override
+  State<OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<OverviewTab> {
+  final _controller = TextEditingController();
+
+  List<ChatMessage> _messages = const [];
+  bool _loading = true;
+  bool _sending = false;
+
+  bool get _isAdmin => widget.role == ServerRole.admin;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final messages = await MockServerStore.getMessages(widget.server.id);
+    if (!mounted) return;
+    setState(() {
+      _messages = messages;
+      _loading = false;
+    });
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _sending) return;
+
+    setState(() => _sending = true);
+    final message = await MockServerStore.postMessage(
+      serverId: widget.server.id,
+      author: widget.username,
+      isAdmin: _isAdmin,
+      text: text,
+    );
+    if (!mounted) return;
+    _controller.clear();
+    setState(() {
+      _messages = [..._messages, message];
+      _sending = false;
+    });
+  }
+
+  Widget _buildMessages() {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    if (_messages.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Belum ada pesan.\nMulai obrolan pertama!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textMuted, height: 1.5),
+          ),
+        ),
+      );
+    }
+
+    // reverse: pesan terbaru menempel di bawah, dekat kolom ketik.
+    return ListView.builder(
+      reverse: true,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        return _MessageTile(message: _messages[_messages.length - 1 - index]);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final stats = _isAdmin
-        ? const [
-            _Stat('Project tersedia', '0'),
-            _Stat('Sedang dikerjakan', '0'),
-            _Stat('Perlu review', '0'),
-          ]
-        : const [
-            _Stat('Project saya', '0'),
-            _Stat('Menunggu review', '0'),
-            _Stat('Saldo', '\$0'),
-          ];
-
-    return PageBody(
-      maxWidth: 600,
-      children: [
-        Text(
-          'Halo, $username!',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _isAdmin
-              ? 'Kamu admin di ${server.name}.'
-              : 'Kamu builder di ${server.name}.',
-          style: const TextStyle(color: AppColors.textMuted),
-        ),
-        const SizedBox(height: 20),
-        if (_isAdmin) ...[
-          _InfoCard(
-            title: 'Token server',
-            description:
-                'Kirim token ini ke temanmu. Setelah mereka daftar, mereka '
-                'pilih Gabung server lalu tempel token ini.',
-            child: _TokenBox(token: server.token),
-          ),
-          const SizedBox(height: 12),
-        ],
-        Row(
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (var i = 0; i < stats.length; i++) ...[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(child: _StatTile(stat: stats[i])),
-            ],
+            if (_isAdmin) _TokenStrip(token: widget.server.token),
+            Expanded(child: _buildMessages()),
+            _InputBar(
+              controller: _controller,
+              sending: _sending,
+              onSend: _send,
+            ),
           ],
         ),
-        const SizedBox(height: 12),
-        const _InfoCard(
-          title: 'Aktivitas terbaru',
-          description: 'Belum ada aktivitas. Project dan progress akan '
-              'muncul di sini.',
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({
-    required this.title,
-    required this.description,
-    this.child,
-  });
+String _formatTime(DateTime time) {
+  String two(int value) => value.toString().padLeft(2, '0');
 
-  final String title;
-  final String description;
-  final Widget? child;
+  final clock = '${two(time.hour)}:${two(time.minute)}';
+  final now = DateTime.now();
+  final today =
+      time.year == now.year && time.month == now.month && time.day == now.day;
+  return today ? clock : '${two(time.day)}/${two(time.month)} $clock';
+}
+
+class _MessageTile extends StatelessWidget {
+  const _MessageTile({required this.message});
+
+  final ChatMessage message;
+
+  Color get _avatarColor {
+    var sum = 0;
+    for (final unit in message.author.codeUnits) {
+      sum += unit;
+    }
+    return kServerColors[sum % kServerColors.length];
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kFieldBorder),
-      ),
-      child: Column(
+    final initial =
+        message.author.isEmpty ? '?' : message.author[0].toUpperCase();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _avatarColor,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            description,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 13,
-              height: 1.4,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  children: [
+                    Text(
+                      message.author,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    _MiniBadge(isAdmin: message.isAdmin),
+                    Text(
+                      _formatTime(message.sentAt),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                SelectableText(
+                  message.text,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
-          if (child != null) ...[
-            const SizedBox(height: 12),
-            child!,
-          ],
         ],
       ),
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({required this.stat});
+class _MiniBadge extends StatelessWidget {
+  const _MiniBadge({required this.isAdmin});
 
-  final _Stat stat;
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kFieldBorder),
+        color: isAdmin ? const Color(0x335865F2) : const Color(0x333BA55D),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            stat.value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            stat.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              height: 1.3,
-            ),
-          ),
-        ],
+      child: Text(
+        isAdmin ? 'Admin' : 'Builder',
+        style: TextStyle(
+          color: isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C),
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
 
-/// Menampilkan token server dengan tombol salin.
-class _TokenBox extends StatefulWidget {
-  const _TokenBox({required this.token});
+/// Strip token di atas obrolan, khusus admin. Dikirim ke teman supaya
+/// mereka bisa gabung lewat menu Gabung server.
+class _TokenStrip extends StatefulWidget {
+  const _TokenStrip({required this.token});
 
   final String token;
 
   @override
-  State<_TokenBox> createState() => _TokenBoxState();
+  State<_TokenStrip> createState() => _TokenStripState();
 }
 
-class _TokenBoxState extends State<_TokenBox> {
+class _TokenStripState extends State<_TokenStrip> {
   bool _copied = false;
 
   Future<void> _copy() async {
@@ -208,23 +269,36 @@ class _TokenBoxState extends State<_TokenBox> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2540),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kFieldBorder),
       ),
       child: Row(
         children: [
+          const Icon(Icons.vpn_key_outlined, size: 18, color: AppColors.accent),
+          const SizedBox(width: 10),
           Expanded(
-            child: SelectableText(
-              widget.token,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontFamily: 'monospace',
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Token server (kirim ke temanmu)',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                ),
+                SelectableText(
+                  widget.token,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontFamily: 'monospace',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ],
             ),
           ),
           TextButton.icon(
@@ -234,6 +308,58 @@ class _TokenBoxState extends State<_TokenBox> {
               size: 18,
             ),
             label: Text(_copied ? 'Tersalin' : 'Salin'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InputBar extends StatelessWidget {
+  const _InputBar({
+    required this.controller,
+    required this.sending,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final bool sending;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: kFieldBorder)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              minLines: 1,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: 'Tulis pesan...',
+                filled: true,
+                fillColor: AppColors.surface,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton.filled(
+            tooltip: 'Kirim',
+            onPressed: sending ? null : onSend,
+            icon: const Icon(Icons.send_rounded),
           ),
         ],
       ),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
 import '../core/validators.dart';
+import '../data/mock_server_store.dart';
 import '../widgets/auth_layout.dart';
-import 'home_screen.dart';
+import 'app_router.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -39,12 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
 
-    final email = _emailController.text.trim();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => HomeScreen(username: email.split('@').first),
-      ),
-    );
+    final username = MockServerStore.usernameForEmail(_emailController.text);
+    await openStartScreen(context, username);
   }
 
   void _openRegister() {

@@ -5,6 +5,7 @@ import '../../models/server.dart';
 import '../../widgets/auth_layout.dart';
 import '../../widgets/page_body.dart';
 import 'placeholder_tab.dart';
+import 'sop_screen.dart';
 
 class _MenuItem {
   const _MenuItem({
@@ -24,11 +25,13 @@ class MoreTab extends StatelessWidget {
   const MoreTab({
     super.key,
     required this.role,
+    required this.server,
     required this.onLeaveServer,
     required this.onLogout,
   });
 
   final ServerRole role;
+  final ServerInfo server;
   final VoidCallback onLeaveServer;
   final VoidCallback onLogout;
 
@@ -54,19 +57,18 @@ class MoreTab extends StatelessWidget {
           title: 'SOP',
           description: 'Aturan dan prosedur kerja di server ini.',
         ),
-        const _MenuItem(
-          icon: Icons.account_tree_outlined,
-          title: 'Structure',
-          description: 'Struktur dan susunan tim di server ini.',
-        ),
-        const _MenuItem(
-          icon: Icons.forum_outlined,
-          title: 'Discussion',
-          description: 'Ruang diskusi antar anggota server.',
-        ),
       ];
 
   void _openItem(BuildContext context, _MenuItem item) {
+    if (item.title == 'SOP') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => SopScreen(server: server, isAdmin: _isAdmin),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
@@ -99,11 +101,13 @@ class MoreTab extends StatelessWidget {
           ),
         const SizedBox(height: 12),
         const _SectionLabel('Akun'),
-        _MenuTile(
-          icon: Icons.swap_horiz_rounded,
-          title: 'Keluar dari server',
-          onTap: onLeaveServer,
-        ),
+        if (!_isAdmin)
+          _MenuTile(
+            icon: Icons.exit_to_app_rounded,
+            title: 'Tinggalkan server',
+            danger: true,
+            onTap: onLeaveServer,
+          ),
         _MenuTile(
           icon: Icons.logout_rounded,
           title: 'Keluar akun',

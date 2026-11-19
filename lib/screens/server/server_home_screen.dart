@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
 import '../../models/server.dart';
-import '../../widgets/server_avatar.dart';
-import '../home_screen.dart';
+import '../../data/mock_server_store.dart';
+import '../app_router.dart';
 import '../login_screen.dart';
 import 'more_tab.dart';
 import 'overview_tab.dart';
 import 'placeholder_tab.dart';
+import 'server_switcher.dart';
 
 class _Destination {
   const _Destination({
@@ -46,8 +47,24 @@ class ServerHomeScreen extends StatefulWidget {
 
 class _ServerHomeScreenState extends State<ServerHomeScreen> {
   int _index = 0;
+  List<ServerMembership> _memberships = const [];
 
   bool get _isAdmin => widget.role == ServerRole.admin;
+
+  @override
+  void initState() {
+    super.initState();
+    // Isi awal: hanya server ini. Daftar lengkap dimuat sesudahnya.
+    _memberships = [ServerMembership(server: widget.server, role: widget.role)];
+    MockServerStore.setLastServer(widget.username, widget.server.id);
+    _loadMemberships();
+  }
+
+  Future<void> _loadMemberships() async {
+    final memberships = await MockServerStore.getMemberships(widget.username);
+    if (!mounted || memberships.isEmpty) return;
+    setState(() => _memberships = memberships);
+  }
 
   static const _beranda = _Destination(
     label: 'Beranda',
@@ -85,8 +102,9 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Anggota',
       title: 'Anggota',
-      description: 'Daftar builder di servermu, status aktif atau libur, '
-          'dan progress yang sedang mereka kerjakan.',
+      description: 'Daftar anggota dan jabatannya: founder, mandor, '
+          'supervisor, dan builder. Termasuk status aktif atau libur '
+          'dan progress mereka.',
       icon: Icons.groups_outlined,
       selectedIcon: Icons.groups_rounded,
     ),
@@ -125,16 +143,46 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
   List<_Destination> get _destinations =>
       _isAdmin ? _adminDestinations : _builderDestinations;
 
-  // TODO: setelah ada daftar server, "Keluar dari server" kembali ke daftar
-  // server, bukan ke halaman "belum punya server". Di data contoh, keanggotaan
-  // juga belum benar-benar dihapus.
-  void _leaveServer() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => HomeScreen(username: widget.username),
+  /// Tinggalkan server (khusus builder): keanggotaan dihapus dan kuota
+  /// gabung bertambah. Setelah itu pindah ke server lain, atau ke halaman
+  /// "belum punya server" kalau tidak ada.
+  Future<void> _leaveServer() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Tinggalkan server?'),
+        content: Text(
+          'Kamu akan keluar dari ${widget.server.name}. Kamu bisa bergabung '
+          'lagi nanti dengan token dari admin.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Tinggalkan'),
+          ),
+        ],
       ),
-      (route) => false,
     );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await MockServerStore.leave(
+        serverId: widget.server.id,
+        username: widget.username,
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+      return;
+    }
+    if (!mounted) return;
+    await openStartScreen(context, widget.username);
   }
 
   void _logout() {
@@ -156,6 +204,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     if (_index == _destinations.length - 1) {
       return MoreTab(
         role: widget.role,
+        server: widget.server,
         onLeaveServer: _leaveServer,
         onLogout: _logout,
       );
@@ -177,27 +226,15 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         scrolledUnderElevation: 0,
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            ServerAvatar(
-              colorIndex: widget.server.colorIndex,
-              iconIndex: widget.server.iconIndex,
-              size: 34,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                widget.server.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
+        titleSpacing: 16,
+        centerTitle: false,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: ServerSwitcher(
+            username: widget.username,
+            current: widget.server,
+            memberships: _memberships,
+          ),
         ),
         actions: [
           _RoleBadge(isAdmin: _isAdmin),

@@ -26,3 +26,11 @@ class ServerInfo {
   final int colorIndex;
   final int iconIndex;
 }
+
+/// Keanggotaan satu akun di satu server: servernya dan peran akun itu di sana.
+class ServerMembership {
+  const ServerMembership({required this.server, required this.role});
+
+  final ServerInfo server;
+  final ServerRole role;
+}

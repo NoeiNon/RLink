@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
 import '../core/validators.dart';
+import '../data/mock_server_store.dart';
 import '../widgets/auth_layout.dart';
 import 'home_screen.dart';
 
@@ -40,6 +41,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // Sekarang hanya simulasi: akun tidak benar-benar tersimpan.
     await Future<void>.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
+
+    MockServerStore.rememberUser(
+      email: _emailController.text,
+      username: _usernameController.text,
+    );
 
     // Hapus halaman Daftar dan Login dari riwayat, jadi tombol kembali
     // tidak membawa pengguna ke halaman login lagi.
