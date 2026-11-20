@@ -8,6 +8,7 @@ import '../login_screen.dart';
 import 'more_tab.dart';
 import 'overview_tab.dart';
 import 'placeholder_tab.dart';
+import 'projects_tab.dart';
 import 'server_switcher.dart';
 
 class _Destination {
@@ -201,6 +202,13 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       );
     }
 
+    if (_index == 1) {
+      return ProjectsTab(
+        server: widget.server,
+        username: widget.username,
+        role: widget.role,
+      );
+    }
     if (_index == _destinations.length - 1) {
       return MoreTab(
         role: widget.role,
@@ -217,6 +225,24 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       icon: destination.selectedIcon,
       title: destination.title,
       description: destination.description,
+    );
+  }
+
+  Widget _buildBody() {
+    final page = _buildPage();
+    if (_index != 0) return page;
+
+    // Di Beranda (obrolan), navigasi pindah ke atas supaya kolom ketik bebas
+    // di paling bawah dan tidak bertabrakan dengan keyboard.
+    return Column(
+      children: [
+        _TopNav(
+          destinations: _destinations,
+          selectedIndex: _index,
+          onSelected: (value) => setState(() => _index = value),
+        ),
+        Expanded(child: page),
+      ],
     );
   }
 
@@ -241,8 +267,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
           const SizedBox(width: 16),
         ],
       ),
-      body: _buildPage(),
-      bottomNavigationBar: NavigationBar(
+      body: _buildBody(),
+      bottomNavigationBar: _index == 0 ? null : NavigationBar(
         selectedIndex: _index,
         backgroundColor: AppColors.surface,
         indicatorColor: const Color(0x335865F2),
@@ -253,6 +279,84 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
               icon: Icon(destination.icon),
               selectedIcon: Icon(destination.selectedIcon),
               label: destination.label,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Navigasi versi atas, dipakai hanya di Beranda. Isinya sama dengan
+/// navigasi bawah di tab lain.
+class _TopNav extends StatelessWidget {
+  const _TopNav({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_Destination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(bottom: BorderSide(color: Color(0xFF2E2942))),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < destinations.length; i++)
+            Expanded(
+              child: InkWell(
+                onTap: () => onSelected(i),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: i == selectedIndex
+                              ? const Color(0x335865F2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          i == selectedIndex
+                              ? destinations[i].selectedIcon
+                              : destinations[i].icon,
+                          size: 22,
+                          color: i == selectedIndex
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        destinations[i].label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: i == selectedIndex
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: i == selectedIndex
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
         ],
       ),
