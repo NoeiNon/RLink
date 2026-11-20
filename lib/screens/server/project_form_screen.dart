@@ -5,10 +5,12 @@ import '../../core/app_theme.dart';
 import '../../data/mock_project_store.dart';
 import '../../data/mock_server_store.dart' show ServerException;
 import '../../models/project.dart';
+import '../../widgets/app_feedback.dart';
 import '../../widgets/auth_layout.dart' show PrimaryButton;
 import '../../widgets/blueprint_gallery.dart';
 
-const kDefaultTags = ['Urgent', 'Delayed'];
+/// Delayed tidak ditawarkan: muncul otomatis kalau deadline terlewat.
+const kDefaultTags = ['Urgent'];
 
 /// Form admin untuk membuat project baru (seperti "New Post" di forum).
 class ProjectFormScreen extends StatefulWidget {
@@ -34,11 +36,13 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   final _amount = TextEditingController();
   final _paymentNote = TextEditingController();
   final _deadline = TextEditingController();
+  DateTime? _deadlineDate;
   final _detail = TextEditingController();
   int _maxWorkers = 1;
   List<String> _tags = [];
   final List<Blueprint> _blueprints = [];
   bool _busy = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -59,8 +63,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null;
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       final Project created = await MockProjectStore.create(
         serverId: widget.serverId,
@@ -70,7 +76,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         paymentAmount: int.parse(_amount.text.replaceAll('.', '')),
         paymentNote: _paymentNote.text,
         detail: _detail.text,
-        deadline: _deadline.text,
+        deadline: _deadlineDate!,
         maxWorkers: _maxWorkers,
         tags: _tags,
         blueprints: _blueprints,
@@ -79,9 +85,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       Navigator.pop(context, created);
     } on ServerException catch (e) {
       if (!mounted) return;
-      setState(() => _busy = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
+      setState(() {
+        _busy = false;
+        _error = e.message;
+      });
     }
   }
 
@@ -101,6 +108,74 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
           decoration: InputDecoration(labelText: label),
         ),
       );
+
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _deadlineDate ?? today.add(const Duration(days: 7)),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365 * 3)),
+    );
+    if (date == null) return;
+    setState(() => _deadlineDate = date);
+    _deadline.text = formatDate(date);
+  }
+
+  /// Pemeriksaan form, lalu popup jumlah worker sebelum publish.
+  Future<void> _start() async {
+    final ok = _formKey.currentState!.validate();
+    if (_blueprints.isEmpty) {
+      setState(() => _error = 'Tambahkan minimal 1 gambar blueprint.');
+      return;
+    }
+    setState(() => _error = null);
+    if (!ok) return;
+
+    final count = ValueNotifier<int>(_maxWorkers);
+    final confirmed = await showConfirmDialog(
+      context,
+      icon: Icons.groups_rounded,
+      color: AppColors.primary,
+      title: 'Jumlah worker',
+      message: 'Berapa builder yang boleh mengerjakan project ini?',
+      confirmLabel: 'Publish',
+      body: ValueListenableBuilder<int>(
+        valueListenable: count,
+        builder: (_, n, _) => Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: n > 1 ? () => count.value = n - 1 : null,
+              icon: const Icon(Icons.remove_circle_outline),
+            ),
+            SizedBox(
+              width: 48,
+              child: Text(
+                '$n',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: n < 10 ? () => count.value = n + 1 : null,
+              icon: const Icon(Icons.add_circle_outline),
+            ),
+          ],
+        ),
+      ),
+    );
+    final chosen = count.value;
+    count.dispose();
+    if (confirmed != true || !mounted) return;
+    setState(() => _maxWorkers = chosen);
+    await _submit();
+  }
 
   Future<void> _pickBlueprints() async {
     final picked = await pickBlueprints(context, already: _blueprints.length);
@@ -154,41 +229,24 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       ),
                     ),
                   ),
-                  _field(_deadline, 'Deadline (mis. 3 minggu)'),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextFormField(
+                      controller: _deadline,
+                      readOnly: true,
+                      onTap: _pickDeadline,
+                      validator: _required,
+                      decoration: const InputDecoration(
+                        labelText: 'Deadline',
+                        suffixIcon: Icon(Icons.calendar_month_outlined),
+                      ),
+                    ),
+                  ),
                   _field(_detail, 'Detail dan lokasi',
                       minLines: 4, maxLines: 10),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Maksimal worker',
-                          style: TextStyle(color: AppColors.textPrimary),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _maxWorkers > 1
-                            ? () => setState(() => _maxWorkers--)
-                            : null,
-                        icon: const Icon(Icons.remove_circle_outline),
-                      ),
-                      Text(
-                        '$_maxWorkers',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _maxWorkers < 10
-                            ? () => setState(() => _maxWorkers++)
-                            : null,
-                        icon: const Icon(Icons.add_circle_outline),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 8),
                   const Text(
-                    'BLUEPRINT (opsional)',
+                    'BLUEPRINT (wajib)',
                     style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 12,
@@ -223,11 +281,15 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     suggestions: suggestions,
                     onChanged: (v) => _tags = v,
                   ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    InlineError(_error!),
+                  ],
                   const SizedBox(height: 20),
                   PrimaryButton(
                     label: 'Publish project',
                     loading: _busy,
-                    onPressed: _submit,
+                    onPressed: _start,
                   ),
                 ],
               ),

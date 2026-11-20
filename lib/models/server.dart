@@ -34,3 +34,11 @@ class ServerMembership {
   final ServerInfo server;
   final ServerRole role;
 }
+
+/// Satu anggota server: nama tampilan dan perannya.
+class ServerMember {
+  const ServerMember({required this.name, required this.role});
+
+  final String name;
+  final ServerRole role;
+}

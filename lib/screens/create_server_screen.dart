@@ -4,6 +4,7 @@ import '../core/app_theme.dart';
 import '../core/validators.dart';
 import '../data/mock_server_store.dart';
 import '../models/server.dart';
+import '../widgets/app_feedback.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/page_body.dart';
 import '../widgets/server_avatar.dart';
@@ -27,6 +28,7 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
   int _colorIndex = 0;
   int _iconIndex = 0;
   bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -37,7 +39,10 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       final server = await MockServerStore.create(
@@ -62,16 +67,16 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
       );
     } on ServerException catch (e) {
       if (!mounted) return;
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      setState(() {
+        _loading = false;
+        _error = e.message;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal membuat server. Coba lagi.')),
-      );
+      setState(() {
+        _loading = false;
+        _error = 'Gagal membuat server. Coba lagi.';
+      });
     }
   }
 
@@ -138,6 +143,10 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
             'Kamu otomatis jadi admin di server ini. Token undangan dibuat '
             'otomatis dan bisa disalin dari halaman server.',
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            InlineError(_error!),
+          ],
           const SizedBox(height: 20),
           PrimaryButton(
             label: 'Buat server',

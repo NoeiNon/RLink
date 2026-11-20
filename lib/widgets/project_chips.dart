@@ -9,6 +9,10 @@ Color statusColor(ProjectStatus status) => switch (status) {
       ProjectStatus.finished => const Color(0xFF8A8F98),
     };
 
+Color tagColor(String tag) => tag.toLowerCase() == 'delayed'
+    ? const Color(0xFFED4245)
+    : const Color(0xFFB69CFF);
+
 /// Chip kecil berwarna untuk status dan tag project.
 class LabelChip extends StatelessWidget {
   const LabelChip({super.key, required this.label, required this.color});

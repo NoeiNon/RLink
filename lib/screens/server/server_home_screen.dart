@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
 import '../../models/server.dart';
+import '../../widgets/app_feedback.dart';
 import '../../data/mock_server_store.dart';
 import '../app_router.dart';
 import '../login_screen.dart';
 import 'more_tab.dart';
+import 'members_sidebar.dart';
 import 'overview_tab.dart';
 import 'placeholder_tab.dart';
+import 'payroll_tab.dart';
 import 'projects_tab.dart';
 import 'server_switcher.dart';
 
@@ -94,15 +97,6 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       selectedIcon: Icons.hardware_rounded,
     ),
     _Destination(
-      label: 'Anggota',
-      title: 'Anggota',
-      description: 'Daftar anggota dan jabatannya: founder, mandor, '
-          'supervisor, dan builder. Termasuk status aktif atau libur '
-          'dan progress mereka.',
-      icon: Icons.groups_outlined,
-      selectedIcon: Icons.groups_rounded,
-    ),
-    _Destination(
       label: 'Gaji',
       title: 'Gaji',
       description: 'Rekap gaji builder dari project yang sudah disetujui. '
@@ -141,25 +135,14 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
   /// gabung bertambah. Setelah itu pindah ke server lain, atau ke halaman
   /// "belum punya server" kalau tidak ada.
   Future<void> _leaveServer() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Tinggalkan server?'),
-        content: Text(
-          'Kamu akan keluar dari ${widget.server.name}. Kamu bisa bergabung '
-          'lagi nanti dengan token dari admin.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Tinggalkan'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      icon: Icons.logout_rounded,
+      color: kErrorColor,
+      title: 'Tinggalkan server?',
+      message: 'Kamu akan keluar dari ${widget.server.name}. Kamu bisa '
+          'bergabung lagi nanti dengan token dari admin.',
+      confirmLabel: 'Tinggalkan',
     );
     if (confirmed != true || !mounted) return;
 
@@ -170,9 +153,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       );
     } on ServerException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      showToast(context, e.message);
       return;
     }
     if (!mounted) return;
@@ -188,10 +169,25 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
 
   Widget _buildPage() {
     if (_index == 0) {
-      return OverviewTab(
+      final overview = OverviewTab(
         username: widget.username,
         server: widget.server,
         role: widget.role,
+      );
+      // Daftar anggota di kanan, hanya di Beranda dan hanya di layar lebar.
+      return LayoutBuilder(
+        builder: (context, box) {
+          if (box.maxWidth < 900) return overview;
+          return Row(
+            children: [
+              Expanded(child: overview),
+              MembersSidebar(
+                server: widget.server,
+                username: widget.username,
+              ),
+            ],
+          );
+        },
       );
     }
 
@@ -212,6 +208,15 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     }
 
     final destination = _destinations[_index];
+    if (destination.label == 'Gaji') {
+      return PayrollTab(
+        key: ValueKey('gaji-${widget.role.name}'),
+        server: widget.server,
+        username: widget.username,
+        role: widget.role,
+        onOpenProjects: () => setState(() => _index = 1),
+      );
+    }
     return PlaceholderTab(
       // Kunci per tab supaya posisi scroll tab lain tidak terbawa.
       key: ValueKey('${widget.role.name}-$_index'),

@@ -25,7 +25,7 @@ class MockProjectStore {
         paymentNote: 'sekitar',
         detail: 'Lokasi: X 4256 | Y 114 | Z 988.\n'
             'Blueprint: intinya sebuah desa seperti Oliver.',
-        deadline: '3 minggu',
+        deadline: now.add(const Duration(days: 21)),
         maxWorkers: 3,
         author: 'AdminDemo',
         createdAt: now.subtract(const Duration(days: 2)),
@@ -39,7 +39,7 @@ class MockProjectStore {
         detail: 'Banyak chest yang terlantar setelah selesai ngebuild belum '
             'dibersihkan. Dan juga fence-fence yang disekitar belum '
             'dibersihkan.',
-        deadline: '5 hari',
+        deadline: now.subtract(const Duration(days: 1)),
         maxWorkers: 3,
         author: 'AdminDemo',
         createdAt: now.subtract(const Duration(days: 4)),
@@ -64,12 +64,24 @@ class MockProjectStore {
         from: 'Duke',
         paymentAmount: 1200,
         detail: 'Rapikan area tambang dan pasang penerangan di semua lorong.',
-        deadline: '1 minggu',
+        deadline: now.subtract(const Duration(days: 5)),
         maxWorkers: 2,
         author: 'AdminDemo',
         createdAt: now.subtract(const Duration(days: 12)),
         status: ProjectStatus.finished,
         workers: const ['BuilderDemo'],
+        updates: [
+          ProjectUpdate(
+            author: 'BuilderDemo',
+            text: 'Lorong utara selesai dirapikan.',
+            sentAt: now.subtract(const Duration(days: 9)),
+          ),
+          ProjectUpdate(
+            author: 'BuilderDemo',
+            text: 'Penerangan terpasang di semua lorong.',
+            sentAt: now.subtract(const Duration(days: 7)),
+          ),
+        ],
       ),
     ];
   }
@@ -125,9 +137,13 @@ class MockProjectStore {
     required String projectId,
     required String author,
     required String text,
+    List<Blueprint> photos = const [],
   }) async {
     await _latency();
     return _change(serverId, projectId, (project) {
+      if (text.trim().isEmpty && photos.isEmpty) {
+        throw const ServerException('Isi penjelasan atau lampirkan foto.');
+      }
       if (!project.hasWorker(author)) {
         throw const ServerException(
           'Hanya worker project ini yang bisa mengirim update.',
@@ -143,6 +159,7 @@ class MockProjectStore {
             author: author,
             text: text.trim(),
             sentAt: DateTime.now(),
+            photos: photos,
           ),
         ],
       );
@@ -178,7 +195,7 @@ class MockProjectStore {
     required int paymentAmount,
     String paymentNote = '',
     required String detail,
-    required String deadline,
+    required DateTime deadline,
     required int maxWorkers,
     List<String> tags = const [],
     List<Blueprint> blueprints = const [],
@@ -191,7 +208,7 @@ class MockProjectStore {
       paymentAmount: paymentAmount,
       paymentNote: paymentNote.trim(),
       detail: detail.trim(),
-      deadline: deadline.trim(),
+      deadline: deadline,
       maxWorkers: maxWorkers,
       author: author,
       createdAt: DateTime.now(),

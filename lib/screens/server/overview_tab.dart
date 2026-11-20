@@ -337,10 +337,9 @@ class _Activity {
   final DateTime at;
 }
 
-/// Panel di atas obrolan, bisa dilipat. Admin: token, tiga statistik, dan
-/// aktivitas terbaru. Builder: hanya "Project tersedia" dan aktivitas
-/// terbaru. Datanya dari project di server. Otomatis tertutup saat keyboard
-/// muncul supaya obrolan tetap lega.
+/// Panel di atas obrolan. Builder: "Project tersedia" (kecil, kiri) dan
+/// aktivitas terbaru (kanan) berdampingan. Admin: tampilan lama yang bisa
+/// dilipat. Datanya dari project di server.
 class _SummaryPanel extends StatefulWidget {
   const _SummaryPanel({
     required this.serverId,
@@ -383,32 +382,21 @@ class _SummaryPanelState extends State<_SummaryPanel> {
           _Activity(u.author, 'mengirim update di “${p.title}”', u.sentAt),
       ],
     ]..sort((a, b) => b.at.compareTo(a.at));
-    return items.take(4).toList();
+    return items.take(widget.isAdmin ? 4 : 3).toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+  /// Panel admin (tampilan lama): token, ringkasan yang bisa dilipat, tiga
+  /// statistik berjajar, lalu aktivitas di bawahnya.
+  Widget _adminPanel(List<_Stat> stats, bool keyboardOpen) {
     final showDetails = _expanded && !keyboardOpen;
-
-    final stats = [
-      _Stat('Project tersedia', '${_count(ProjectStatus.available)}'),
-      if (widget.isAdmin) ...[
-        _Stat('Sedang dikerjakan', '${_count(ProjectStatus.onProgress)}'),
-        _Stat('Perlu review', '${_count(ProjectStatus.review)}'),
-      ],
-    ];
-
-    final summary = widget.isAdmin
-        ? '${stats[0].value} tersedia · '
-            '${stats[1].value} dikerjakan · '
-            '${stats[2].value} perlu review'
-        : '${stats[0].value} project tersedia';
+    final summary = '${stats[0].value} tersedia · '
+        '${stats[1].value} dikerjakan · '
+        '${stats[2].value} perlu review';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.isAdmin) _TokenStrip(token: widget.token),
+        _TokenStrip(token: widget.token),
         InkWell(
           onTap: () {
             setState(() => _expanded = !_expanded);
@@ -465,23 +453,73 @@ class _SummaryPanelState extends State<_SummaryPanel> {
       ],
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    // Tertutup saat keyboard muncul supaya obrolan tetap lega.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    final stats = [
+      _Stat('Project tersedia', '${_count(ProjectStatus.available)}'),
+      if (widget.isAdmin) ...[
+        _Stat('Sedang dikerjakan', '${_count(ProjectStatus.onProgress)}'),
+        _Stat('Perlu review', '${_count(ProjectStatus.review)}'),
+      ],
+    ];
+
+    if (widget.isAdmin) return _adminPanel(stats, keyboardOpen);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!keyboardOpen)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Statistik kecil di kiri, aktivitas di kanan.
+                  SizedBox(
+                    width: 120,
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < stats.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 8),
+                          Expanded(child: _StatTile(stat: stats[i], dense: true)),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: _ActivityCard(items: _activities())),
+                ],
+              ),
+            ),
+          ),
+        Container(height: 1, color: kFieldBorder),
+      ],
+    );
+  }
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.stat});
+  const _StatTile({required this.stat, this.dense = false});
 
   final _Stat stat;
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(dense ? 10 : 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: kFieldBorder),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(

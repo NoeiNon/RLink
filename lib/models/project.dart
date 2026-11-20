@@ -20,11 +20,15 @@ class ProjectUpdate {
     required this.author,
     required this.text,
     required this.sentAt,
+    this.photos = const [],
   });
 
   final String author;
   final String text;
   final DateTime sentAt;
+
+  /// Foto lapangan yang dilampirkan worker.
+  final List<Blueprint> photos;
 }
 
 /// Gambar blueprint yang dilampirkan admin ke sebuah project.
@@ -63,7 +67,7 @@ class Project {
   /// Catatan bebas: "sekitar", "bisa nego", dst.
   final String paymentNote;
   final String detail;
-  final String deadline;
+  final DateTime deadline;
   final int maxWorkers;
   final String author;
   final DateTime createdAt;
@@ -84,6 +88,19 @@ class Project {
     final amount = formatMoney(paymentAmount);
     return paymentNote.isEmpty ? amount : '$amount · $paymentNote';
   }
+
+  /// Lewat tanggal deadline dan belum selesai. Tag Delayed muncul otomatis.
+  bool get isOverdue {
+    if (status == ProjectStatus.finished) return false;
+    final end = DateTime(deadline.year, deadline.month, deadline.day + 1);
+    return !DateTime.now().isBefore(end);
+  }
+
+  /// Tag buatan admin ditambah Delayed otomatis (Delayed manual diabaikan).
+  List<String> get displayTags => [
+        ...tags.where((t) => t.toLowerCase() != 'delayed'),
+        if (isOverdue) 'Delayed',
+      ];
 
   bool get isFull => workers.length >= maxWorkers;
 
@@ -117,6 +134,10 @@ class Project {
     );
   }
 }
+
+/// 5 Jan 2026 -> "05/01/2026"
+String formatDate(DateTime d) =>
+    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
 String timeAgo(DateTime time) {
   final diff = DateTime.now().difference(time);

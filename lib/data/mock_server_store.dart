@@ -209,6 +209,26 @@ class MockServerStore {
     return result;
   }
 
+  /// Daftar anggota satu server (founder dulu). Nama diambil dari akun yang
+  /// terdaftar; kalau tidak ketemu, dipakai nama kecilnya.
+  /// TODO: backend harus mengembalikan nama dan peran saja, tanpa email.
+  static Future<List<ServerMember>> getMembers(String serverId) async {
+    await _latency();
+    final names = {
+      for (final name in _usernames.values) name.toLowerCase(): name,
+    };
+    final result = [
+      for (final entry in (_members[serverId] ?? const <String, ServerRole>{})
+          .entries)
+        ServerMember(name: names[entry.key] ?? entry.key, role: entry.value),
+    ];
+    result.sort((a, b) {
+      if (a.role != b.role) return a.role == ServerRole.admin ? -1 : 1;
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
+    return result;
+  }
+
   static void setLastServer(String username, String serverId) {
     _lastServer[_key(username)] = serverId;
   }

@@ -4,6 +4,7 @@ import '../core/app_theme.dart';
 import '../core/validators.dart';
 import '../data/mock_auth_store.dart';
 import '../data/mock_server_store.dart' show ServerException;
+import '../widgets/app_feedback.dart';
 import '../widgets/auth_layout.dart';
 import 'home_screen.dart';
 
@@ -23,6 +24,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscure = true;
   bool _loading = false;
+  String? _emailError;
+  String? _usernameError;
+  String? _generalError;
 
   @override
   void dispose() {
@@ -36,7 +40,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _emailError = null;
+      _usernameError = null;
+      _generalError = null;
+    });
 
     try {
       await MockAuthStore.register(
@@ -44,12 +53,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         username: _usernameController.text,
         password: _passwordController.text,
       );
+    } on EmailTakenException catch (e) {
+      _fail(email: e.message);
+      return;
+    } on UsernameTakenException catch (e) {
+      _fail(username: e.message);
+      return;
     } on ServerException catch (e) {
-      if (!mounted) return;
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      _fail(general: e.message);
       return;
     }
     if (!mounted) return;
@@ -62,6 +73,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       (route) => false,
     );
+  }
+
+  void _fail({String? email, String? username, String? general}) {
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _emailError = email;
+      _usernameError = username;
+      _generalError = general;
+    });
+  }
+
+  void _clearErrors() {
+    if (_emailError == null &&
+        _usernameError == null &&
+        _generalError == null) {
+      return;
+    }
+    setState(() {
+      _emailError = null;
+      _usernameError = null;
+      _generalError = null;
+    });
   }
 
   @override
@@ -78,9 +112,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
+                onChanged: (_) => _clearErrors(),
                 decoration: appInputDecoration(
                   label: 'Email',
                   icon: Icons.mail_outline_rounded,
+                ).copyWith(
+                  errorText: _emailError,
+                  errorStyle: kFieldErrorStyle,
+                  errorMaxLines: 2,
                 ),
                 validator: Validators.email,
               ),
@@ -88,10 +127,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _usernameController,
                 textInputAction: TextInputAction.next,
+                onChanged: (_) => _clearErrors(),
                 decoration: appInputDecoration(
                   label: 'Username',
                   helper: 'Bebas: nama Minecraft atau nama buatanmu sendiri',
                   icon: Icons.person_outline_rounded,
+                ).copyWith(
+                  errorText: _usernameError,
+                  errorStyle: kFieldErrorStyle,
+                  errorMaxLines: 2,
                 ),
                 validator: Validators.username,
               ),
@@ -134,6 +178,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 24),
+        if (_generalError != null) ...[
+          InlineError(_generalError!),
+          const SizedBox(height: 14),
+        ],
         PrimaryButton(label: 'Daftar', loading: _loading, onPressed: _submit),
         const SizedBox(height: 16),
         Row(

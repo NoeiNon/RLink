@@ -5,6 +5,7 @@ import '../../data/mock_project_store.dart';
 import '../../models/project.dart';
 import '../../models/server.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
+import '../../widgets/blueprint_gallery.dart';
 import '../../widgets/project_chips.dart';
 import 'project_detail_screen.dart';
 import 'project_form_screen.dart';
@@ -54,7 +55,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
         return p.status.name == _filter.substring(7);
       }
       if (_filter.startsWith('tag:')) {
-        return p.tags.contains(_filter.substring(4));
+        return p.displayTags.contains(_filter.substring(4));
       }
       return true;
     }).toList();
@@ -94,7 +95,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final tags = {for (final p in all) ...p.tags}.toList()..sort();
+    final tags = {for (final p in all) ...p.displayTags}.toList()..sort();
     final shown = _visible(all);
 
     final filters = <(String, String)>[
@@ -198,9 +199,79 @@ class _ProjectCard extends StatelessWidget {
   final Project project;
   final VoidCallback onTap;
 
+  /// Cuplikan detail; memudar di bawah kalau teksnya lebih panjang dari kartu.
+  Widget _snippet() {
+    const style = TextStyle(
+      color: AppColors.textMuted,
+      fontSize: 13.5,
+      height: 1.4,
+    );
+    return LayoutBuilder(
+      builder: (context, box) {
+        final painter = TextPainter(
+          text: TextSpan(text: project.detail, style: style),
+          maxLines: 4,
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: box.maxWidth);
+        final text = Text(
+          project.detail,
+          maxLines: 4,
+          overflow: TextOverflow.clip,
+          style: style,
+        );
+        if (!painter.didExceedMaxLines) return text;
+        return ShaderMask(
+          blendMode: BlendMode.dstIn,
+          shaderCallback: (rect) => const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.white, Colors.transparent],
+            stops: [0, 0.55, 1],
+          ).createShader(rect),
+          child: text,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final n = project.updates.length;
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          project.title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            LabelChip(
+              label: project.status.label,
+              color: statusColor(project.status),
+            ),
+            for (final tag in project.displayTags)
+              LabelChip(label: tag, color: tagColor(tag)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _snippet(),
+        const SizedBox(height: 8),
+        Text(
+          '${project.author} · $n update · ${timeAgo(project.createdAt)}',
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+        ),
+      ],
+    );
+
+    final hasImages = project.blueprints.isNotEmpty;
     return Card(
       color: AppColors.surface,
       margin: const EdgeInsets.only(bottom: 10),
@@ -213,39 +284,26 @@ class _ProjectCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                project.title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  LabelChip(
-                    label: project.status.label,
-                    color: statusColor(project.status),
-                  ),
-                  for (final tag in project.tags)
-                    LabelChip(label: tag, color: AppColors.accent),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${project.author} · $n update · ${timeAgo(project.createdAt)}',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, box) {
+              if (!hasImages) return text;
+              final gallery = BlueprintCarousel(items: project.blueprints);
+              // Kartu lebar: gambar di kiri, teks di kanan. Sempit: bertumpuk.
+              if (box.maxWidth >= 560) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 240, child: gallery),
+                    const SizedBox(width: 16),
+                    Expanded(child: text),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [gallery, const SizedBox(height: 10), text],
+              );
+            },
           ),
         ),
       ),

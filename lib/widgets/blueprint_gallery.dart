@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../models/project.dart';
+import 'app_feedback.dart';
 
 const _maxBytes = 5 * 1024 * 1024;
 const _maxItems = 10;
@@ -31,14 +32,77 @@ Future<List<Blueprint>> pickBlueprints(
     picked.add(Blueprint(name: file.name, bytes: bytes));
   }
   if (skipped > 0 && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-        '$skipped gambar dilewati (maks 5 MB per gambar, '
-        '$_maxItems gambar per project).',
-      ),
-    ));
+    showToast(
+      context,
+      '$skipped gambar dilewati (maks 5 MB per gambar, '
+      '$_maxItems gambar per project).',
+    );
   }
   return picked;
+}
+
+void previewBlueprint(BuildContext context, Blueprint item) =>
+    const BlueprintGallery(items: <Blueprint>[])._preview(context, item);
+
+/// Galeri besar yang bisa digeser ke samping (tampilan di kartu project).
+class BlueprintCarousel extends StatelessWidget {
+  const BlueprintCarousel({super.key, required this.items, this.height = 170});
+
+  final List<Blueprint> items;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final multi = items.length > 1;
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: ListView.separated(
+        shrinkWrap: true,
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => AspectRatio(
+          aspectRatio: 1.3,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                InkWell(
+                  onTap: () => previewBlueprint(context, items[i]),
+                  child: Image.memory(items[i].bytes, fit: BoxFit.cover),
+                ),
+                if (multi)
+                  Positioned(
+                    right: 6,
+                    bottom: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${i + 1}/${items.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      ),
+    );
+  }
 }
 
 /// Galeri kecil blueprint. Ketuk gambar untuk memperbesar; kalau [onRemove]

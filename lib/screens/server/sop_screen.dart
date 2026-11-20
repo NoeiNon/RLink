@@ -4,6 +4,7 @@ import '../../core/app_theme.dart';
 import '../../data/mock_server_store.dart';
 import '../../models/server.dart';
 import '../../models/server_content.dart';
+import '../../widgets/app_feedback.dart';
 import '../../widgets/auth_layout.dart';
 
 String _formatDateTime(DateTime time) {
@@ -73,9 +74,7 @@ class _SopScreenState extends State<SopScreen> {
       _editing = false;
       _saving = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('SOP disimpan')),
-    );
+    showToast(context, 'SOP disimpan', error: false);
   }
 
   List<Widget> _buildActions() {

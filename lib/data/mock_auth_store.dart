@@ -4,7 +4,20 @@ import 'mock_server_store.dart' show ServerException;
 /// pengguna ke halaman Daftar.
 class AccountNotFoundException extends ServerException {
   const AccountNotFoundException()
-      : super('Akun belum terdaftar. Daftar dulu untuk membuat username.');
+      : super('Akun belum terdaftar. Silakan daftar terlebih dahulu.');
+}
+
+class WrongPasswordException extends ServerException {
+  const WrongPasswordException() : super('Password salah.');
+}
+
+class EmailTakenException extends ServerException {
+  const EmailTakenException()
+      : super('Email ini sudah terdaftar. Silakan masuk.');
+}
+
+class UsernameTakenException extends ServerException {
+  const UsernameTakenException() : super('Username ini sudah dipakai.');
 }
 
 class _Account {
@@ -55,12 +68,12 @@ class MockAuthStore {
     final name = username.trim();
 
     if (_accounts.containsKey(key)) {
-      throw const ServerException('Email ini sudah terdaftar. Silakan masuk.');
+      throw const EmailTakenException();
     }
     final taken = _accounts.values
         .any((a) => a.username.toLowerCase() == name.toLowerCase());
     if (taken) {
-      throw const ServerException('Username ini sudah dipakai.');
+      throw const UsernameTakenException();
     }
     _accounts[key] = _Account(username: name, password: password);
   }
@@ -94,7 +107,7 @@ class MockAuthStore {
         );
       }
       _failures[key] = count;
-      throw const ServerException('Password salah.');
+      throw const WrongPasswordException();
     }
 
     _failures.remove(key);
