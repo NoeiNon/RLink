@@ -23,8 +23,7 @@ class MockProjectStore {
         from: 'Your Majesty',
         paymentAmount: 21000,
         paymentNote: 'sekitar',
-        detail:
-            'Lokasi: X 4256 | Y 114 | Z 988.\n'
+        detail: 'Lokasi: X 4256 | Y 114 | Z 988.\n'
             'Blueprint: intinya sebuah desa seperti Oliver.',
         deadline: '3 minggu',
         maxWorkers: 3,
@@ -37,8 +36,7 @@ class MockProjectStore {
         title: 'DV. Resource - Pembersihan Sisa Build',
         from: 'Mandor',
         paymentAmount: 2500,
-        detail:
-            'Banyak chest yang terlantar setelah selesai ngebuild belum '
+        detail: 'Banyak chest yang terlantar setelah selesai ngebuild belum '
             'dibersihkan. Dan juga fence-fence yang disekitar belum '
             'dibersihkan.',
         deadline: '5 hari',

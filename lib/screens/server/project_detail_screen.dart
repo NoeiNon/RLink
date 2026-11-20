@@ -59,26 +59,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
   }
 
-  Future<void> _claim() => _run(
-    () => MockProjectStore.claim(
-      serverId: widget.serverId,
-      projectId: _project.id,
-      username: widget.username,
-    ),
-  );
+  Future<void> _claim() => _run(() => MockProjectStore.claim(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        username: widget.username,
+      ));
 
   Future<void> _send() async {
     final text = _input.text.trim();
     if (text.isEmpty) return;
     _input.clear();
-    await _run(
-      () => MockProjectStore.addUpdate(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        author: widget.username,
-        text: text,
-      ),
-    );
+    await _run(() => MockProjectStore.addUpdate(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          author: widget.username,
+          text: text,
+        ));
   }
 
   Future<void> _addBlueprints() async {
@@ -87,22 +83,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       already: _project.blueprints.length,
     );
     if (picked.isEmpty) return;
-    await _run(
-      () => MockProjectStore.addBlueprints(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        items: picked,
-      ),
-    );
+    await _run(() => MockProjectStore.addBlueprints(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          items: picked,
+        ));
   }
 
   Future<void> _removeBlueprint(int index) => _run(
-    () => MockProjectStore.removeBlueprint(
-      serverId: widget.serverId,
-      projectId: _project.id,
-      index: index,
-    ),
-  );
+        () => MockProjectStore.removeBlueprint(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          index: index,
+        ),
+      );
 
   Future<void> _editTags() async {
     var tags = List<String>.of(_project.tags);
@@ -126,13 +120,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await _run(
-      () => MockProjectStore.setTags(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        tags: tags,
-      ),
-    );
+    await _run(() => MockProjectStore.setTags(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          tags: tags,
+        ));
   }
 
   Future<void> _accept() async {
@@ -154,12 +146,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await _run(
-      () => MockProjectStore.accept(
-        serverId: widget.serverId,
-        projectId: _project.id,
-      ),
-    );
+    await _run(() => MockProjectStore.accept(
+          serverId: widget.serverId,
+          projectId: _project.id,
+        ));
   }
 
   Future<void> _decline() async {
@@ -191,14 +181,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final text = reason.text;
     reason.dispose();
     if (ok != true) return;
-    await _run(
-      () => MockProjectStore.decline(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        reviewer: widget.username,
-        reason: text,
-      ),
-    );
+    await _run(() => MockProjectStore.decline(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          reviewer: widget.username,
+          reason: text,
+        ));
   }
 
   Future<void> _markDone() async {
@@ -223,46 +211,42 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
     if (ok != true) return;
-    await _run(
-      () => MockProjectStore.markDone(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        username: widget.username,
-      ),
-    );
+    await _run(() => MockProjectStore.markDone(
+          serverId: widget.serverId,
+          projectId: _project.id,
+          username: widget.username,
+        ));
   }
 
   Widget _card(String title, Widget child) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: kFieldBorder),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: kFieldBorder),
         ),
-        const SizedBox(height: 8),
-        child,
-      ],
-    ),
-  );
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            child,
+          ],
+        ),
+      );
 
   Widget _line(String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 4),
-    child: Text.rich(
-      TextSpan(
-        children: [
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text.rich(TextSpan(children: [
           TextSpan(
             text: '$label: ',
             style: const TextStyle(color: AppColors.textMuted),
@@ -271,17 +255,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             text: value,
             style: const TextStyle(color: AppColors.textPrimary),
           ),
-        ],
-      ),
-    ),
-  );
+        ])),
+      );
 
   Widget _actions() {
     final p = _project;
     Widget note(String text) => Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(text, style: const TextStyle(color: AppColors.textMuted)),
-    );
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(text, style: const TextStyle(color: AppColors.textMuted)),
+        );
 
     if (_isAdmin) {
       return Padding(
@@ -289,10 +271,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         child: Column(
           children: [
             if (p.status == ProjectStatus.review) ...[
-              note(
-                'Builder menandai project ini selesai. '
-                'Periksa progress, lalu putuskan.',
-              ),
+              note('Builder menandai project ini selesai. '
+                  'Periksa progress, lalu putuskan.'),
               Row(
                 children: [
                   Expanded(
@@ -381,18 +361,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    LabelChip(
-                      label: p.status.label,
-                      color: statusColor(p.status),
-                    ),
-                    for (final t in p.tags)
-                      LabelChip(label: t, color: AppColors.accent),
-                  ],
-                ),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  LabelChip(
+                    label: p.status.label,
+                    color: statusColor(p.status),
+                  ),
+                  for (final t in p.tags)
+                    LabelChip(label: t, color: AppColors.accent),
+                ]),
                 const SizedBox(height: 14),
                 _card(
                   'INFO',
@@ -444,14 +420,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 if (p.workers.isNotEmpty)
                   _card(
                     'WORKER',
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final w in p.workers)
-                          LabelChip(label: w, color: AppColors.primary),
-                      ],
-                    ),
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      for (final w in p.workers)
+                        LabelChip(label: w, color: AppColors.primary),
+                    ]),
                   ),
                 _actions(),
                 _card(

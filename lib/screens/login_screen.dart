@@ -54,19 +54,18 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          action: action == null
-              ? null
-              : SnackBarAction(label: action, onPressed: _openRegister),
-        ),
-      );
+      ..showSnackBar(SnackBar(
+        content: Text(message),
+        action: action == null
+            ? null
+            : SnackBarAction(label: action, onPressed: _openRegister),
+      ));
   }
 
   void _openRegister() {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const RegisterScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const RegisterScreen()),
+    );
   }
 
   @override

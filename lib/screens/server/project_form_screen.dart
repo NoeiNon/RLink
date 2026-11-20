@@ -90,16 +90,17 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     String label, {
     int maxLines = 1,
     int minLines = 1,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: TextFormField(
-      controller: c,
-      validator: _required,
-      minLines: minLines,
-      maxLines: maxLines,
-      decoration: InputDecoration(labelText: label),
-    ),
-  );
+  }) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextFormField(
+          controller: c,
+          validator: _required,
+          minLines: minLines,
+          maxLines: maxLines,
+          decoration: InputDecoration(labelText: label),
+        ),
+      );
 
   Future<void> _pickBlueprints() async {
     final picked = await pickBlueprints(context, already: _blueprints.length);
@@ -154,12 +155,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     ),
                   ),
                   _field(_deadline, 'Deadline (mis. 3 minggu)'),
-                  _field(
-                    _detail,
-                    'Detail dan lokasi',
-                    minLines: 4,
-                    maxLines: 10,
-                  ),
+                  _field(_detail, 'Detail dan lokasi',
+                      minLines: 4, maxLines: 10),
                   Row(
                     children: [
                       const Expanded(

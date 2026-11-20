@@ -7,11 +7,11 @@ enum ProjectStatus { available, onProgress, review, finished }
 
 extension ProjectStatusLabel on ProjectStatus {
   String get label => switch (this) {
-    ProjectStatus.available => 'Available',
-    ProjectStatus.onProgress => 'On Progress',
-    ProjectStatus.review => 'Menunggu review',
-    ProjectStatus.finished => 'Finished',
-  };
+        ProjectStatus.available => 'Available',
+        ProjectStatus.onProgress => 'On Progress',
+        ProjectStatus.review => 'Menunggu review',
+        ProjectStatus.finished => 'Finished',
+      };
 }
 
 /// Satu update progress di thread sebuah project.
@@ -40,7 +40,8 @@ class Project {
     required this.id,
     required this.title,
     required this.from,
-    required this.payment,
+    required this.paymentAmount,
+    this.paymentNote = '',
     required this.detail,
     required this.deadline,
     required this.maxWorkers,
@@ -56,7 +57,11 @@ class Project {
   final String id;
   final String title;
   final String from;
-  final String payment;
+  /// Nominal dalam dollar server (angka, supaya bisa dihitung di tab Gaji).
+  final int paymentAmount;
+
+  /// Catatan bebas: "sekitar", "bisa nego", dst.
+  final String paymentNote;
   final String detail;
   final String deadline;
   final int maxWorkers;
@@ -73,6 +78,11 @@ class Project {
   bool hasWorker(String username) {
     final key = username.trim().toLowerCase();
     return workers.any((worker) => worker.toLowerCase() == key);
+  }
+
+  String get paymentLabel {
+    final amount = formatMoney(paymentAmount);
+    return paymentNote.isEmpty ? amount : '$amount · $paymentNote';
   }
 
   bool get isFull => workers.length >= maxWorkers;
@@ -92,7 +102,8 @@ class Project {
       id: id,
       title: title,
       from: from,
-      payment: payment,
+      paymentAmount: paymentAmount,
+      paymentNote: paymentNote,
       detail: detail,
       deadline: deadline,
       maxWorkers: maxWorkers,
@@ -113,4 +124,15 @@ String timeAgo(DateTime time) {
   if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
   if (diff.inHours < 24) return '${diff.inHours} jam lalu';
   return '${diff.inDays} hari lalu';
+}
+
+/// 21000 -> "$21.000"
+String formatMoney(int value) {
+  final digits = value.abs().toString();
+  final out = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) out.write('.');
+    out.write(digits[i]);
+  }
+  return '\$${value < 0 ? '-' : ''}$out';
 }

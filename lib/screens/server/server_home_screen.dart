@@ -88,8 +88,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description:
-          'Buat dan publish project, atur judul, deskripsi, blueprint '
+      description: 'Buat dan publish project, atur judul, deskripsi, blueprint '
           'dan tags. Cek progress builder, lalu Accept atau Decline hasilnya.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -97,8 +96,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Anggota',
       title: 'Anggota',
-      description:
-          'Daftar anggota dan jabatannya: founder, mandor, '
+      description: 'Daftar anggota dan jabatannya: founder, mandor, '
           'supervisor, dan builder. Termasuk status aktif atau libur '
           'dan progress mereka.',
       icon: Icons.groups_outlined,
@@ -107,8 +105,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Gaji',
       title: 'Gaji',
-      description:
-          'Rekap gaji builder dari project yang sudah disetujui. '
+      description: 'Rekap gaji builder dari project yang sudah disetujui. '
           'Fungsinya menyusul.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
@@ -121,8 +118,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description:
-          'Lihat project yang tersedia, claim, upload progress '
+      description: 'Lihat project yang tersedia, claim, upload progress '
           'tiap saat, lalu mark as done kalau sudah selesai.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -130,8 +126,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Gaji',
       title: 'Gaji',
-      description:
-          'Saldo dan riwayat gaji dari project yang sudah '
+      description: 'Saldo dan riwayat gaji dari project yang sudah '
           'disetujui admin.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
@@ -175,8 +170,9 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       );
     } on ServerException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
       return;
     }
     if (!mounted) return;
@@ -341,12 +337,10 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isAdmin
-        ? const Color(0x335865F2)
-        : const Color(0x333BA55D);
-    final foreground = isAdmin
-        ? const Color(0xFFB5BCFF)
-        : const Color(0xFF6FD08C);
+    final background =
+        isAdmin ? const Color(0x335865F2) : const Color(0x333BA55D);
+    final foreground =
+        isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

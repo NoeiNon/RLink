@@ -161,12 +161,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.builder(
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      8,
-                      16,
-                      _isBuilder ? 16 : 88,
-                    ),
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, _isBuilder ? 16 : 88),
                     itemCount: shown.length,
                     itemBuilder: (_, i) => _ProjectCard(
                       project: shown[i],

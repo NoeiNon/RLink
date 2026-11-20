@@ -1,139 +1,37 @@
-import 'dart:typed_data';
+import 'package:flutter/material.dart';
 
-/// Status project diatur sistem mengikuti alurnya (bukan dipilih manual):
-/// available -> onProgress (ada yang claim) -> review (mark as done)
-/// -> finished (admin Accept) atau kembali ke onProgress (admin Decline).
-enum ProjectStatus { available, onProgress, review, finished }
+import '../models/project.dart';
 
-extension ProjectStatusLabel on ProjectStatus {
-  String get label => switch (this) {
-    ProjectStatus.available => 'Available',
-    ProjectStatus.onProgress => 'On Progress',
-    ProjectStatus.review => 'Menunggu review',
-    ProjectStatus.finished => 'Finished',
-  };
-}
+Color statusColor(ProjectStatus status) => switch (status) {
+      ProjectStatus.available => const Color(0xFF3BA55D),
+      ProjectStatus.onProgress => const Color(0xFF7C8AFF),
+      ProjectStatus.review => const Color(0xFFF28C28),
+      ProjectStatus.finished => const Color(0xFF8A8F98),
+    };
 
-/// Satu update progress di thread sebuah project.
-class ProjectUpdate {
-  const ProjectUpdate({
-    required this.author,
-    required this.text,
-    required this.sentAt,
-  });
+/// Chip kecil berwarna untuk status dan tag project.
+class LabelChip extends StatelessWidget {
+  const LabelChip({super.key, required this.label, required this.color});
 
-  final String author;
-  final String text;
-  final DateTime sentAt;
-}
+  final String label;
+  final Color color;
 
-/// Gambar blueprint yang dilampirkan admin ke sebuah project.
-class Blueprint {
-  const Blueprint({required this.name, required this.bytes});
-
-  final String name;
-  final Uint8List bytes;
-}
-
-class Project {
-  const Project({
-    required this.id,
-    required this.title,
-    required this.from,
-    required this.paymentAmount,
-    this.paymentNote = '',
-    required this.detail,
-    required this.deadline,
-    required this.maxWorkers,
-    required this.author,
-    required this.createdAt,
-    this.tags = const [],
-    this.status = ProjectStatus.available,
-    this.workers = const [],
-    this.updates = const [],
-    this.blueprints = const [],
-  });
-
-  final String id;
-  final String title;
-  final String from;
-
-  /// Nominal dalam dollar server (angka, supaya bisa dihitung di tab Gaji).
-  final int paymentAmount;
-
-  /// Catatan bebas: "sekitar", "bisa nego", dst.
-  final String paymentNote;
-  final String detail;
-  final String deadline;
-  final int maxWorkers;
-  final String author;
-  final DateTime createdAt;
-
-  /// Label bebas buatan admin (Urgent, Delayed, dst.).
-  final List<String> tags;
-  final ProjectStatus status;
-  final List<String> workers;
-  final List<ProjectUpdate> updates;
-  final List<Blueprint> blueprints;
-
-  bool hasWorker(String username) {
-    final key = username.trim().toLowerCase();
-    return workers.any((worker) => worker.toLowerCase() == key);
-  }
-
-  String get paymentLabel {
-    final amount = formatMoney(paymentAmount);
-    return paymentNote.isEmpty ? amount : '$amount · $paymentNote';
-  }
-
-  bool get isFull => workers.length >= maxWorkers;
-
-  /// Masih bisa diambil/dikerjakan (belum masuk review atau selesai).
-  bool get isOpen =>
-      status == ProjectStatus.available || status == ProjectStatus.onProgress;
-
-  Project copyWith({
-    List<String>? tags,
-    ProjectStatus? status,
-    List<String>? workers,
-    List<ProjectUpdate>? updates,
-    List<Blueprint>? blueprints,
-  }) {
-    return Project(
-      id: id,
-      title: title,
-      from: from,
-      paymentAmount: paymentAmount,
-      paymentNote: paymentNote,
-      detail: detail,
-      deadline: deadline,
-      maxWorkers: maxWorkers,
-      author: author,
-      createdAt: createdAt,
-      tags: tags ?? this.tags,
-      status: status ?? this.status,
-      workers: workers ?? this.workers,
-      updates: updates ?? this.updates,
-      blueprints: blueprints ?? this.blueprints,
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withAlpha(0x33),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
-}
-
-String timeAgo(DateTime time) {
-  final diff = DateTime.now().difference(time);
-  if (diff.inMinutes < 1) return 'baru saja';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-  if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-  return '${diff.inDays} hari lalu';
-}
-
-/// 21000 -> "$21.000"
-String formatMoney(int value) {
-  final digits = value.abs().toString();
-  final out = StringBuffer();
-  for (var i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0) out.write('.');
-    out.write(digits[i]);
-  }
-  return '\$${value < 0 ? '-' : ''}$out';
 }
