@@ -7,6 +7,7 @@ import '../../models/server.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
 import '../../widgets/project_chips.dart';
 import 'project_detail_screen.dart';
+import 'project_form_screen.dart';
 
 /// Daftar project ala forum Discord: cari, filter, lalu buka detail.
 class ProjectsTab extends StatefulWidget {
@@ -73,6 +74,19 @@ class _ProjectsTabState extends State<ProjectsTab> {
     if (mounted) _load();
   }
 
+  Future<void> _create(List<String> knownTags) async {
+    final created = await Navigator.of(context).push<Project>(
+      MaterialPageRoute<Project>(
+        builder: (_) => ProjectFormScreen(
+          serverId: widget.server.id,
+          author: widget.username,
+          knownTags: knownTags,
+        ),
+      ),
+    );
+    if (created != null && mounted) _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = _projects;
@@ -90,7 +104,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
       for (final t in tags) ('tag:$t', '#$t'),
     ];
 
-    return Column(
+    final body = Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -147,7 +161,12 @@ class _ProjectsTabState extends State<ProjectsTab> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      _isBuilder ? 16 : 88,
+                    ),
                     itemCount: shown.length,
                     itemBuilder: (_, i) => _ProjectCard(
                       project: shown[i],
@@ -155,6 +174,23 @@ class _ProjectsTabState extends State<ProjectsTab> {
                     ),
                   ),
                 ),
+        ),
+      ],
+    );
+
+    if (_isBuilder) return body;
+    // Admin: tombol "Project baru" (seperti New Post di forum Discord).
+    return Stack(
+      children: [
+        body,
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.extended(
+            onPressed: () => _create(tags),
+            icon: const Icon(Icons.add),
+            label: const Text('Project baru'),
+          ),
         ),
       ],
     );

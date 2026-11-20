@@ -88,7 +88,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description: 'Buat dan publish project, atur judul, deskripsi, blueprint '
+      description:
+          'Buat dan publish project, atur judul, deskripsi, blueprint '
           'dan tags. Cek progress builder, lalu Accept atau Decline hasilnya.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -103,7 +104,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Anggota',
       title: 'Anggota',
-      description: 'Daftar anggota dan jabatannya: founder, mandor, '
+      description:
+          'Daftar anggota dan jabatannya: founder, mandor, '
           'supervisor, dan builder. Termasuk status aktif atau libur '
           'dan progress mereka.',
       icon: Icons.groups_outlined,
@@ -117,7 +119,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description: 'Lihat project yang tersedia, claim, upload progress '
+      description:
+          'Lihat project yang tersedia, claim, upload progress '
           'tiap saat, lalu mark as done kalau sudah selesai.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -125,7 +128,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Blueprint',
       title: 'Blueprint',
-      description: 'Lihat rencana dan blueprint bangunan. Kamu juga bisa '
+      description:
+          'Lihat rencana dan blueprint bangunan. Kamu juga bisa '
           'menambahkan referensi untuk project yang kamu ambil.',
       icon: Icons.architecture_outlined,
       selectedIcon: Icons.architecture_rounded,
@@ -133,7 +137,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Gaji',
       title: 'Gaji',
-      description: 'Saldo dan riwayat gaji dari project yang sudah '
+      description:
+          'Saldo dan riwayat gaji dari project yang sudah '
           'disetujui admin.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
@@ -177,9 +182,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       );
     } on ServerException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
       return;
     }
     if (!mounted) return;
@@ -228,68 +232,54 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     );
   }
 
-  Widget _buildBody() {
-    final page = _buildPage();
-    if (_index != 0) return page;
-
-    // Di Beranda (obrolan), navigasi pindah ke atas supaya kolom ketik bebas
-    // di paling bawah dan tidak bertabrakan dengan keyboard.
-    return Column(
-      children: [
-        _TopNav(
-          destinations: _destinations,
-          selectedIndex: _index,
-          onSelected: (value) => setState(() => _index = value),
-        ),
-        Expanded(child: page),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Navigasi di samping penuh dari atas ke bawah; dropdown server dan
+    // lencana peran berada di sebelah kanan navigasi.
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        titleSpacing: 16,
-        centerTitle: false,
-        title: Align(
-          alignment: Alignment.centerLeft,
-          child: ServerSwitcher(
-            username: widget.username,
-            current: widget.server,
-            memberships: _memberships,
-          ),
-        ),
-        actions: [
-          _RoleBadge(isAdmin: _isAdmin),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: _buildBody(),
-      bottomNavigationBar: _index == 0 ? null : NavigationBar(
-        selectedIndex: _index,
-        backgroundColor: AppColors.surface,
-        indicatorColor: const Color(0x335865F2),
-        onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: [
-          for (final destination in _destinations)
-            NavigationDestination(
-              icon: Icon(destination.icon),
-              selectedIcon: Icon(destination.selectedIcon),
-              label: destination.label,
+      body: SafeArea(
+        child: Row(
+          children: [
+            _SideNav(
+              destinations: _destinations,
+              selectedIndex: _index,
+              onSelected: (value) => setState(() => _index = value),
             ),
-        ],
+            Expanded(
+              child: Column(
+                children: [
+                  AppBar(
+                    backgroundColor: Colors.transparent,
+                    scrolledUnderElevation: 0,
+                    titleSpacing: 16,
+                    centerTitle: false,
+                    title: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ServerSwitcher(
+                        username: widget.username,
+                        current: widget.server,
+                        memberships: _memberships,
+                      ),
+                    ),
+                    actions: [
+                      _RoleBadge(isAdmin: _isAdmin),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                  Expanded(child: _buildPage()),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Navigasi versi atas, dipakai hanya di Beranda. Isinya sama dengan
-/// navigasi bawah di tab lain.
-class _TopNav extends StatelessWidget {
-  const _TopNav({
+/// Navigasi samping untuk semua tab (admin dan builder).
+class _SideNav extends StatelessWidget {
+  const _SideNav({
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
@@ -304,61 +294,47 @@ class _TopNav extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: Color(0xFF2E2942))),
+        border: Border(right: BorderSide(color: Color(0xFF2E2942))),
       ),
-      child: Row(
-        children: [
-          for (var i = 0; i < destinations.length; i++)
-            Expanded(
-              child: InkWell(
-                onTap: () => onSelected(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: i == selectedIndex
-                              ? const Color(0x335865F2)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          i == selectedIndex
-                              ? destinations[i].selectedIcon
-                              : destinations[i].icon,
-                          size: 22,
-                          color: i == selectedIndex
-                              ? AppColors.textPrimary
-                              : AppColors.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        destinations[i].label,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: NavigationRail(
+                minWidth: 60,
+                selectedIndex: selectedIndex,
+                backgroundColor: Colors.transparent,
+                indicatorColor: const Color(0x335865F2),
+                labelType: NavigationRailLabelType.all,
+                selectedLabelTextStyle: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                unselectedLabelTextStyle: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMuted,
+                ),
+                onDestinationSelected: onSelected,
+                destinations: [
+                  for (final d in destinations)
+                    NavigationRailDestination(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      icon: Icon(d.icon),
+                      selectedIcon: Icon(d.selectedIcon),
+                      label: Text(
+                        d.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: i == selectedIndex
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: i == selectedIndex
-                              ? AppColors.textPrimary
-                              : AppColors.textMuted,
-                        ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
               ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -372,10 +348,12 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        isAdmin ? const Color(0x335865F2) : const Color(0x333BA55D);
-    final foreground =
-        isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C);
+    final background = isAdmin
+        ? const Color(0x335865F2)
+        : const Color(0x333BA55D);
+    final foreground = isAdmin
+        ? const Color(0xFFB5BCFF)
+        : const Color(0xFF6FD08C);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

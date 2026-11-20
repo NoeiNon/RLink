@@ -38,26 +38,21 @@ class MoreTab extends StatelessWidget {
   bool get _isAdmin => role == ServerRole.admin;
 
   List<_MenuItem> get _items => [
-        _MenuItem(
-          icon: Icons.notifications_outlined,
-          title: 'Inactive Notice',
-          description: _isAdmin
-              ? 'Setujui atau tolak pengajuan libur dari builder. '
-                  'Builder yang libur tidak bisa claim project dan tidak digaji.'
-              : 'Ajukan libur kalau sedang sibuk. Kalau disetujui admin, '
-                  'statusmu jadi libur.',
-        ),
-        const _MenuItem(
-          icon: Icons.campaign_outlined,
-          title: 'Pengumuman',
-          description: 'Pengumuman dari admin untuk semua anggota server.',
-        ),
-        const _MenuItem(
-          icon: Icons.gavel_outlined,
-          title: 'SOP',
-          description: 'Aturan dan prosedur kerja di server ini.',
-        ),
-      ];
+    _MenuItem(
+      icon: Icons.notifications_outlined,
+      title: 'Inactive Notice',
+      description: _isAdmin
+          ? 'Setujui atau tolak pengajuan libur dari builder. '
+                'Builder yang libur tidak bisa claim project dan tidak digaji.'
+          : 'Ajukan libur kalau sedang sibuk. Kalau disetujui admin, '
+                'statusmu jadi libur.',
+    ),
+    const _MenuItem(
+      icon: Icons.gavel_outlined,
+      title: 'SOP',
+      description: 'Aturan dan prosedur kerja di server ini.',
+    ),
+  ];
 
   void _openItem(BuildContext context, _MenuItem item) {
     if (item.title == 'SOP') {

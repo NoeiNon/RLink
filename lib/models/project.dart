@@ -5,11 +5,11 @@ enum ProjectStatus { available, onProgress, review, finished }
 
 extension ProjectStatusLabel on ProjectStatus {
   String get label => switch (this) {
-        ProjectStatus.available => 'Available',
-        ProjectStatus.onProgress => 'On Progress',
-        ProjectStatus.review => 'Menunggu review',
-        ProjectStatus.finished => 'Finished',
-      };
+    ProjectStatus.available => 'Available',
+    ProjectStatus.onProgress => 'On Progress',
+    ProjectStatus.review => 'Menunggu review',
+    ProjectStatus.finished => 'Finished',
+  };
 }
 
 /// Satu update progress di thread sebuah project.
@@ -70,6 +70,7 @@ class Project {
       status == ProjectStatus.available || status == ProjectStatus.onProgress;
 
   Project copyWith({
+    List<String>? tags,
     ProjectStatus? status,
     List<String>? workers,
     List<ProjectUpdate>? updates,
@@ -84,7 +85,7 @@ class Project {
       maxWorkers: maxWorkers,
       author: author,
       createdAt: createdAt,
-      tags: tags,
+      tags: tags ?? this.tags,
       status: status ?? this.status,
       workers: workers ?? this.workers,
       updates: updates ?? this.updates,

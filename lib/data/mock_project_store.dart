@@ -3,10 +3,11 @@ import 'mock_server_store.dart' show ServerException;
 
 /// Data project contoh, disimpan di memori (hilang saat app di-restart).
 /// Hanya server demo (s_0) yang berisi project; server baru masih kosong
-/// sampai admin bisa membuat project (tahap berikutnya).
+/// sampai admin membuat project.
 ///
 /// TODO: ganti dengan backend. Aturan di sini (siapa boleh claim, slot penuh,
 /// hanya worker yang boleh kirim update) harus diperiksa lagi di backend.
+/// TODO: pastikan create/accept/decline/setTags hanya bisa oleh admin.
 /// TODO: tolak claim kalau status builder sedang libur (Inactive Notice).
 class MockProjectStore {
   MockProjectStore._();
@@ -21,7 +22,8 @@ class MockProjectStore {
         title: 'DV. Builder - Butcher Village',
         from: 'Your Majesty',
         payment: 'Sekitar \$21.000',
-        detail: 'Lokasi: X 4256 | Y 114 | Z 988.\n'
+        detail:
+            'Lokasi: X 4256 | Y 114 | Z 988.\n'
             'Blueprint: intinya sebuah desa seperti Oliver.',
         deadline: '3 minggu',
         maxWorkers: 3,
@@ -34,7 +36,8 @@ class MockProjectStore {
         title: 'DV. Resource - Pembersihan Sisa Build',
         from: 'Mandor',
         payment: '\$2.500',
-        detail: 'Banyak chest yang terlantar setelah selesai ngebuild belum '
+        detail:
+            'Banyak chest yang terlantar setelah selesai ngebuild belum '
             'dibersihkan. Dan juga fence-fence yang disekitar belum '
             'dibersihkan.',
         deadline: '5 hari',
@@ -164,6 +167,92 @@ class MockProjectStore {
         throw const ServerException('Project ini sedang tidak dikerjakan.');
       }
       return project.copyWith(status: ProjectStatus.review);
+    });
+  }
+
+  /// Admin membuat project baru. Langsung tampil sebagai Available.
+  static Future<Project> create({
+    required String serverId,
+    required String author,
+    required String title,
+    required String from,
+    required String payment,
+    required String detail,
+    required String deadline,
+    required int maxWorkers,
+    List<String> tags = const [],
+  }) async {
+    await _latency();
+    final project = Project(
+      id: 'p_${DateTime.now().microsecondsSinceEpoch}',
+      title: title.trim(),
+      from: from.trim(),
+      payment: payment.trim(),
+      detail: detail.trim(),
+      deadline: deadline.trim(),
+      maxWorkers: maxWorkers,
+      author: author,
+      createdAt: DateTime.now(),
+      tags: tags,
+    );
+    _byServer.putIfAbsent(serverId, () => <Project>[]).insert(0, project);
+    return project;
+  }
+
+  /// Admin mengubah tag bebas (Urgent, Delayed, dst.).
+  static Future<Project> setTags({
+    required String serverId,
+    required String projectId,
+    required List<String> tags,
+  }) async {
+    await _latency();
+    return _change(
+      serverId,
+      projectId,
+      (project) => project.copyWith(tags: tags),
+    );
+  }
+
+  /// Admin menerima hasil kerja. Status jadi Finished.
+  static Future<Project> accept({
+    required String serverId,
+    required String projectId,
+  }) async {
+    await _latency();
+    return _change(serverId, projectId, (project) {
+      if (project.status != ProjectStatus.review) {
+        throw const ServerException('Project ini tidak sedang direview.');
+      }
+      return project.copyWith(status: ProjectStatus.finished);
+    });
+  }
+
+  /// Admin menolak hasil kerja. Project kembali ke On Progress; alasan
+  /// (opsional) masuk ke thread progress.
+  static Future<Project> decline({
+    required String serverId,
+    required String projectId,
+    required String reviewer,
+    String reason = '',
+  }) async {
+    await _latency();
+    return _change(serverId, projectId, (project) {
+      if (project.status != ProjectStatus.review) {
+        throw const ServerException('Project ini tidak sedang direview.');
+      }
+      final note = reason.trim();
+      return project.copyWith(
+        status: ProjectStatus.onProgress,
+        updates: [
+          ...project.updates,
+          if (note.isNotEmpty)
+            ProjectUpdate(
+              author: reviewer,
+              text: 'Decline: $note',
+              sentAt: DateTime.now(),
+            ),
+        ],
+      );
     });
   }
 }
