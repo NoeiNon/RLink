@@ -21,7 +21,7 @@ class MockProjectStore {
         id: 'p_1',
         title: 'DV. Builder - Butcher Village',
         from: 'Your Majesty',
-        paymentAmount: 21000,
+        paymentAmount: 2100000,
         paymentNote: 'sekitar',
         detail: 'Lokasi: X 4256 | Y 114 | Z 988.\n'
             'Blueprint: intinya sebuah desa seperti Oliver.',
@@ -35,7 +35,7 @@ class MockProjectStore {
         id: 'p_2',
         title: 'DV. Resource - Pembersihan Sisa Build',
         from: 'Mandor',
-        paymentAmount: 2500,
+        paymentAmount: 250000,
         detail: 'Banyak chest yang terlantar setelah selesai ngebuild belum '
             'dibersihkan. Dan juga fence-fence yang disekitar belum '
             'dibersihkan.',
@@ -62,7 +62,7 @@ class MockProjectStore {
         id: 'p_3',
         title: 'Duke - Tempat Mining',
         from: 'Duke',
-        paymentAmount: 1200,
+        paymentAmount: 120000,
         detail: 'Rapikan area tambang dan pasang penerangan di semua lorong.',
         deadline: now.subtract(const Duration(days: 5)),
         maxWorkers: 2,

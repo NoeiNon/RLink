@@ -8,9 +8,26 @@ import '../../models/project.dart';
 import '../../models/server.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
+import '../../widgets/money_input.dart';
+import '../../widgets/payslip_card.dart';
 import '../../widgets/project_chips.dart';
 
 const _pendingColor = Color(0xFFF28C28);
+
+/// Satu baris bonus/potongan yang sedang diketik admin.
+class _Draft {
+  final name = TextEditingController();
+  final amount = TextEditingController();
+
+  int get value => parseMoney(amount.text);
+  bool get empty => name.text.trim().isEmpty && value == 0;
+  bool get complete => name.text.trim().isNotEmpty && value > 0;
+
+  void dispose() {
+    name.dispose();
+    amount.dispose();
+  }
+}
 
 /// Tab Gaji. Builder: receipt miliknya sendiri (pending lalu arsip).
 /// Admin: menilai project yang selesai, lalu menandai "Payed" per worker.
@@ -137,20 +154,179 @@ class _PayrollTabState extends State<PayrollTab> {
         ));
   }
 
-  Future<void> _pay(String worker, int total) async {
+  Future<void> _pay(String worker, List<Receipt> receipts) async {
+    final base = receipts.fold<int>(0, (s, r) => s + (r.amount ?? 0));
+    final bonuses = <_Draft>[];
+    final cuts = <_Draft>[];
+    final valid = ValueNotifier<bool>(true);
+
+    int sum(List<_Draft> l) =>
+        l.where((d) => d.complete).fold<int>(0, (s, d) => s + d.value);
+
     final ok = await showConfirmDialog(
       context,
-      icon: Icons.payments_rounded,
+      icon: Icons.receipt_long_rounded,
       color: kSuccessColor,
-      title: 'Tandai sudah dibayar?',
-      message: 'Pastikan ${formatMoney(total)} sudah kamu transfer ke '
-          '$worker. Receipt akan pindah ke arsip.',
+      title: 'Buat slip gaji?',
+      message: 'Slip $worker berisi ${receipts.length} project '
+          '(${formatMoney(base)}). Tambahkan bonus atau potongan bila '
+          'perlu, lalu pastikan gajinya sudah kamu transfer.',
       confirmLabel: 'Payed',
+      confirmEnabled: valid,
+      body: StatefulBuilder(
+        builder: (context, setLocal) {
+          final total = base + sum(bonuses) - sum(cuts);
+          final partial = [...bonuses, ...cuts]
+              .any((d) => !d.empty && !d.complete);
+          final isValid = total >= 0 && !partial;
+          if (valid.value != isValid) {
+            // Ubah setelah frame ini selesai supaya tombol tidak dibangun
+            // ulang di tengah proses build dialog.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              valid.value = isValid;
+            });
+          }
+
+          Widget rows(List<_Draft> list) => Column(
+                children: [
+                  for (final d in list)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: d.name,
+                              onChanged: (_) => setLocal(() {}),
+                              decoration: const InputDecoration(
+                                hintText: 'Keterangan',
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: d.amount,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [ThousandsFormatter()],
+                              onChanged: (_) => setLocal(() {}),
+                              decoration: const InputDecoration(
+                                hintText: 'Rp',
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => setLocal(() {
+                              list.remove(d);
+                              d.dispose();
+                            }),
+                            icon: const Icon(Icons.close, size: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+
+          Widget heading(String text, VoidCallback onAdd) => Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Tambah'),
+                  ),
+                ],
+              );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              heading('Bonus (masuk RINCIAN)',
+                  () => setLocal(() => bonuses.add(_Draft()))),
+              rows(bonuses),
+              heading('Potongan', () => setLocal(() => cuts.add(_Draft()))),
+              Wrap(
+                spacing: 6,
+                children: [
+                  for (final name in const ['Telat deadline', 'Kasbon'])
+                    ActionChip(
+                      label: Text(name),
+                      onPressed: () => setLocal(
+                        () => cuts.add(_Draft()..name.text = name),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              rows(cuts),
+              const Divider(color: kFieldBorder),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Total pembayaran',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                  Text(
+                    formatMoney(total),
+                    style: TextStyle(
+                      color: total < 0
+                          ? kErrorColor
+                          : AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              if (total < 0) ...[
+                const SizedBox(height: 8),
+                const InlineError('Potongan melebihi total rincian.'),
+              ] else if (partial) ...[
+                const SizedBox(height: 8),
+                const InlineError(
+                  'Isi keterangan dan nominal, atau hapus barisnya.',
+                ),
+              ],
+            ],
+          );
+        },
+      ),
     );
+
+    final lines = [
+      for (final d in bonuses.where((d) => d.complete))
+        SlipLine(d.name.text.trim(), d.value),
+    ];
+    final cutLines = [
+      for (final d in cuts.where((d) => d.complete))
+        SlipLine(d.name.text.trim(), d.value),
+    ];
+    for (final d in [...bonuses, ...cuts]) {
+      d.dispose();
+    }
+    valid.dispose();
     if (ok != true) return;
     await _run(() => MockPayrollStore.payWorker(
           serverId: widget.server.id,
           worker: worker,
+          bonuses: lines,
+          deductions: cutLines,
         ));
   }
 
@@ -300,37 +476,10 @@ class _PayrollTabState extends State<PayrollTab> {
   }
 
   Widget _archive(List<Payout> payouts) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final p in payouts)
-            _box(
-              child: Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  tilePadding: EdgeInsets.zero,
-                  childrenPadding: const EdgeInsets.only(bottom: 4),
-                  expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                  title: Text(
-                    _isAdmin ? '${p.worker} · ${formatMoney(p.total)}'
-                        : formatMoney(p.total),
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Dibayar ${formatDate(p.paidAt)} · '
-                    '${p.receipts.length} project',
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
-                  ),
-                  children: [for (final r in p.receipts) _receipt(r, paid: true)],
-                ),
-              ),
-            ),
+            PayslipCard(payout: p, serverName: widget.server.name),
         ],
       );
 
@@ -371,7 +520,7 @@ class _PayrollTabState extends State<PayrollTab> {
         for (final r in mine) _box(child: _receipt(r)),
       ],
       if (archive.isNotEmpty) ...[
-        _title('ARSIP'),
+        _title('SLIP GAJI'),
         _archive(archive),
       ],
     ];
@@ -467,14 +616,8 @@ class _PayrollTabState extends State<PayrollTab> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _busy
-                        ? null
-                        : () => _pay(
-                              e.key,
-                              e.value.fold<int>(
-                                  0, (s, r) => s + (r.amount ?? 0)),
-                            ),
-                    child: const Text('Payed'),
+                    onPressed: _busy ? null : () => _pay(e.key, e.value),
+                    child: const Text('Buat slip & Payed'),
                   ),
                 ),
               ],
@@ -482,7 +625,7 @@ class _PayrollTabState extends State<PayrollTab> {
           ),
       ],
       if (data.paid.isNotEmpty) ...[
-        _title('ARSIP'),
+        _title('SLIP GAJI'),
         _archive(data.paid),
       ],
     ];

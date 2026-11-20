@@ -1,6 +1,6 @@
 {
-    "name": "rf_build",
-    "short_name": "rf_build",
+    "name": "RLink",
+    "short_name": "RLink",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/app_theme.dart';
 import '../../data/mock_project_store.dart';
@@ -8,6 +7,7 @@ import '../../models/project.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/auth_layout.dart' show PrimaryButton;
 import '../../widgets/blueprint_gallery.dart';
+import '../../widgets/money_input.dart';
 
 /// Delayed tidak ditawarkan: muncul otomatis kalau deadline terlewat.
 const kDefaultTags = ['Urgent'];
@@ -205,7 +205,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     child: TextFormField(
                       controller: _amount,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [_ThousandsFormatter()],
+                      inputFormatters: [ThousandsFormatter()],
                       validator: (v) {
                         final n = int.tryParse((v ?? '').replaceAll('.', ''));
                         return (n == null || n <= 0)
@@ -214,7 +214,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       },
                       decoration: const InputDecoration(
                         labelText: 'Payment',
-                        prefixText: '\$ ',
+                        prefixText: 'Rp ',
                       ),
                     ),
                   ),
@@ -397,28 +397,6 @@ class _TagEditorState extends State<TagEditor> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Angka saja, otomatis diberi titik ribuan (21000 -> 21.000).
-class _ThousandsFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    if (digits.length > 9) digits = digits.substring(0, 9);
-    final out = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) out.write('.');
-      out.write(digits[i]);
-    }
-    final text = out.toString();
-    return TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

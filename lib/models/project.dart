@@ -139,6 +139,24 @@ class Project {
 String formatDate(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
+const _monthNames = [
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
+];
+
+/// DateTime -> "November 2026"
+String formatPeriod(DateTime d) => '${_monthNames[d.month - 1]} ${d.year}';
+
 String timeAgo(DateTime time) {
   final diff = DateTime.now().difference(time);
   if (diff.inMinutes < 1) return 'baru saja';
@@ -147,7 +165,7 @@ String timeAgo(DateTime time) {
   return '${diff.inDays} hari lalu';
 }
 
-/// 21000 -> "$21.000"
+/// 21000 -> "Rp 21.000"
 String formatMoney(int value) {
   final digits = value.abs().toString();
   final out = StringBuffer();
@@ -155,5 +173,5 @@ String formatMoney(int value) {
     if (i > 0 && (digits.length - i) % 3 == 0) out.write('.');
     out.write(digits[i]);
   }
-  return '\$${value < 0 ? '-' : ''}$out';
+  return 'Rp ${value < 0 ? '-' : ''}$out';
 }

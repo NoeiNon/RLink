@@ -106,6 +106,8 @@ class MockPayrollStore {
   static Future<void> payWorker({
     required String serverId,
     required String worker,
+    List<SlipLine> bonuses = const [],
+    List<SlipLine> deductions = const [],
   }) async {
     final unpaid = await _unpaid(serverId);
     final mine = unpaid
@@ -114,15 +116,32 @@ class MockPayrollStore {
     if (mine.isEmpty) {
       throw const ServerException('Belum ada gaji yang bisa dibayar.');
     }
+    bool bad(SlipLine l) => l.label.trim().isEmpty || l.amount <= 0;
+    if (bonuses.any(bad) || deductions.any(bad)) {
+      throw const ServerException('Nama dan nominal harus diisi semua.');
+    }
+    int sum(Iterable<int> v) => v.fold(0, (a, b) => a + b);
+    final earnings = sum(mine.map((r) => r.amount ?? 0)) +
+        sum(bonuses.map((l) => l.amount));
+    if (sum(deductions.map((l) => l.amount)) > earnings) {
+      throw const ServerException(
+        'Potongan tidak boleh melebihi total rincian.',
+      );
+    }
     final keys = _paidKeys.putIfAbsent(serverId, () => <String>{});
     for (final r in mine) {
       keys.add(_key(r.project.id, r.worker));
     }
     (_payouts[serverId] ??= []).add(Payout(
       id: 'pay_${_counter++}',
+      number: (_payouts[serverId]?.length ?? 0) + 1,
       worker: mine.first.worker,
       receipts: mine,
       paidAt: DateTime.now(),
+      bonuses: [for (final b in bonuses) SlipLine(b.label.trim(), b.amount)],
+      deductions: [
+        for (final d in deductions) SlipLine(d.label.trim(), d.amount),
+      ],
     ));
   }
 }

@@ -46,22 +46,44 @@ class Receipt {
   }
 }
 
-/// Satu pembayaran dari admin: semua receipt worker yang tertunda digabung
-/// jadi satu arsip.
+/// Satu baris tambahan di slip: bonus (RINCIAN) atau potongan (POTONGAN).
+class SlipLine {
+  const SlipLine(this.label, this.amount);
+
+  final String label;
+  final int amount;
+}
+
+/// Satu pembayaran dari admin = satu slip gaji: semua receipt worker yang
+/// tertunda digabung, ditambah bonus dan dikurangi potongan.
 class Payout {
   const Payout({
     required this.id,
+    required this.number,
     required this.worker,
     required this.receipts,
     required this.paidAt,
+    this.bonuses = const [],
+    this.deductions = const [],
   });
 
   final String id;
+
+  /// Nomor slip, berurutan per server.
+  final int number;
   final String worker;
   final List<Receipt> receipts;
   final DateTime paidAt;
+  final List<SlipLine> bonuses;
+  final List<SlipLine> deductions;
 
-  int get total => receipts.fold(0, (sum, r) => sum + (r.amount ?? 0));
+  int get totalEarnings =>
+      receipts.fold(0, (sum, r) => sum + (r.amount ?? 0)) +
+      bonuses.fold(0, (sum, l) => sum + l.amount);
+  int get totalDeductions => deductions.fold(0, (sum, l) => sum + l.amount);
+
+  /// TOTAL PEMBAYARAN = total rincian - total potongan.
+  int get total => totalEarnings - totalDeductions;
 }
 
 class PayrollData {

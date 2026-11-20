@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
@@ -27,8 +28,11 @@ class InlineError extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.error_outline_rounded,
-                size: 16, color: kErrorColor),
+            child: Icon(
+              Icons.error_outline_rounded,
+              size: 16,
+              color: kErrorColor,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -98,81 +102,84 @@ Future<bool?> showConfirmDialog(
   required String confirmLabel,
   String cancelLabel = 'Batal',
   Widget? body,
+  ValueListenable<bool>? confirmEnabled,
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (ctx) => Dialog(
-      backgroundColor: AppColors.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: const BorderSide(color: kFieldBorder),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: color.withAlpha(0x2E),
-                  child: Icon(icon, color: color, size: 28),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 13.5,
-                  height: 1.45,
-                ),
-              ),
-              if (body != null) ...[
-                const SizedBox(height: 16),
-                body,
-              ],
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: Text(cancelLabel),
-                    ),
+    builder: (ctx) {
+      Widget button(bool enabled) => FilledButton(
+        style: FilledButton.styleFrom(backgroundColor: color),
+        onPressed: enabled ? () => Navigator.pop(ctx, true) : null,
+        child: Text(confirmLabel, style: const TextStyle(color: Colors.white)),
+      );
+      return Dialog(
+        backgroundColor: AppColors.surface,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: kFieldBorder),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 28,
+                    backgroundColor: color.withAlpha(0x2E),
+                    child: Icon(icon, color: color, size: 28),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(backgroundColor: color),
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: Text(
-                        confirmLabel,
-                        style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13.5,
+                    height: 1.45,
+                  ),
+                ),
+                if (body != null) ...[const SizedBox(height: 16), body],
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: Text(cancelLabel),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: confirmEnabled == null
+                          ? button(true)
+                          : ValueListenableBuilder<bool>(
+                              valueListenable: confirmEnabled,
+                              builder: (_, enabled, _) => button(enabled),
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
