@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
 import '../core/validators.dart';
-import '../data/mock_server_store.dart';
+import '../data/mock_auth_store.dart';
+import '../data/mock_server_store.dart' show ServerException;
 import '../widgets/auth_layout.dart';
 import 'app_router.dart';
 import 'register_screen.dart';
@@ -34,20 +35,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
 
-    // TODO: ganti dengan login sungguhan setelah backend dipilih.
-    // Sekarang hanya simulasi: email dan password apa pun yang formatnya
-    // benar akan lolos, dan datanya tidak disimpan.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
+    try {
+      final username = await MockAuthStore.login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      await openStartScreen(context, username);
+    } on AccountNotFoundException catch (e) {
+      _showError(e.message, action: 'Daftar');
+    } on ServerException catch (e) {
+      _showError(e.message);
+    }
+  }
 
-    final username = MockServerStore.usernameForEmail(_emailController.text);
-    await openStartScreen(context, username);
+  void _showError(String message, {String? action}) {
+    if (!mounted) return;
+    setState(() => _loading = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: action == null
+              ? null
+              : SnackBarAction(label: action, onPressed: _openRegister),
+        ),
+      );
   }
 
   void _openRegister() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const RegisterScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const RegisterScreen()));
   }
 
   @override

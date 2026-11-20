@@ -6,6 +6,7 @@ import '../../data/mock_server_store.dart' show ServerException;
 import '../../models/project.dart';
 import '../../models/server.dart';
 import '../../widgets/auth_layout.dart' show PrimaryButton, kFieldBorder;
+import '../../widgets/blueprint_gallery.dart';
 import '../../widgets/project_chips.dart';
 import 'project_form_screen.dart' show TagEditor;
 
@@ -79,6 +80,29 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       ),
     );
   }
+
+  Future<void> _addBlueprints() async {
+    final picked = await pickBlueprints(
+      context,
+      already: _project.blueprints.length,
+    );
+    if (picked.isEmpty) return;
+    await _run(
+      () => MockProjectStore.addBlueprints(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        items: picked,
+      ),
+    );
+  }
+
+  Future<void> _removeBlueprint(int index) => _run(
+    () => MockProjectStore.removeBlueprint(
+      serverId: widget.serverId,
+      projectId: _project.id,
+      index: index,
+    ),
+  );
 
   Future<void> _editTags() async {
     var tags = List<String>.of(_project.tags);
@@ -376,7 +400,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _line('Dari', p.from),
-                      _line('Payment', p.payment),
+                      _line('Payment', p.paymentLabel),
                       _line('Deadline', p.deadline),
                       _line('Worker', '${p.workers.length}/${p.maxWorkers}'),
                     ],
@@ -389,6 +413,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
+                if (p.blueprints.isNotEmpty || _isAdmin)
+                  _card(
+                    'BLUEPRINT (${p.blueprints.length})',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (p.blueprints.isEmpty)
+                          const Text(
+                            'Belum ada blueprint.',
+                            style: TextStyle(color: AppColors.textMuted),
+                          )
+                        else
+                          BlueprintGallery(
+                            items: p.blueprints,
+                            onRemove: _isAdmin ? _removeBlueprint : null,
+                          ),
+                        if (_isAdmin)
+                          TextButton.icon(
+                            onPressed: _busy ? null : _addBlueprints,
+                            icon: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 18,
+                            ),
+                            label: const Text('Tambah gambar'),
+                          ),
+                      ],
+                    ),
+                  ),
                 if (p.workers.isNotEmpty)
                   _card(
                     'WORKER',

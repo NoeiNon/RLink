@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/app_theme.dart';
 import '../../data/mock_project_store.dart';
 import '../../data/mock_server_store.dart' show ServerException;
 import '../../models/project.dart';
 import '../../widgets/auth_layout.dart' show PrimaryButton;
+import '../../widgets/blueprint_gallery.dart';
 
 const kDefaultTags = ['Urgent', 'Delayed'];
 
@@ -29,16 +31,25 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _from = TextEditingController();
-  final _payment = TextEditingController();
+  final _amount = TextEditingController();
+  final _paymentNote = TextEditingController();
   final _deadline = TextEditingController();
   final _detail = TextEditingController();
   int _maxWorkers = 1;
   List<String> _tags = [];
+  final List<Blueprint> _blueprints = [];
   bool _busy = false;
 
   @override
   void dispose() {
-    for (final c in [_title, _from, _payment, _deadline, _detail]) {
+    for (final c in [
+      _title,
+      _from,
+      _amount,
+      _paymentNote,
+      _deadline,
+      _detail,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -56,11 +67,13 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         author: widget.author,
         title: _title.text,
         from: _from.text,
-        payment: _payment.text,
+        paymentAmount: int.parse(_amount.text.replaceAll('.', '')),
+        paymentNote: _paymentNote.text,
         detail: _detail.text,
         deadline: _deadline.text,
         maxWorkers: _maxWorkers,
         tags: _tags,
+        blueprints: _blueprints,
       );
       if (!mounted) return;
       Navigator.pop(context, created);
@@ -77,17 +90,22 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     String label, {
     int maxLines = 1,
     int minLines = 1,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextFormField(
-          controller: c,
-          validator: _required,
-          minLines: minLines,
-          maxLines: maxLines,
-          decoration: InputDecoration(labelText: label),
-        ),
-      );
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextFormField(
+      controller: c,
+      validator: _required,
+      minLines: minLines,
+      maxLines: maxLines,
+      decoration: InputDecoration(labelText: label),
+    ),
+  );
+
+  Future<void> _pickBlueprints() async {
+    final picked = await pickBlueprints(context, already: _blueprints.length);
+    if (picked.isEmpty || !mounted) return;
+    setState(() => _blueprints.addAll(picked));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,10 +124,42 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                 children: [
                   _field(_title, 'Judul project'),
                   _field(_from, 'Dari (pemberi project)'),
-                  _field(_payment, 'Payment'),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextFormField(
+                      controller: _amount,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [_ThousandsFormatter()],
+                      validator: (v) {
+                        final n = int.tryParse((v ?? '').replaceAll('.', ''));
+                        return (n == null || n <= 0)
+                            ? 'Isi nominal payment'
+                            : null;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Payment',
+                        prefixText: '\$ ',
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextFormField(
+                      controller: _paymentNote,
+                      maxLength: 40,
+                      decoration: const InputDecoration(
+                        labelText: 'Catatan payment (opsional)',
+                        hintText: 'mis. sekitar, bisa nego',
+                      ),
+                    ),
+                  ),
                   _field(_deadline, 'Deadline (mis. 3 minggu)'),
-                  _field(_detail, 'Detail, lokasi, dan blueprint',
-                      minLines: 4, maxLines: 10),
+                  _field(
+                    _detail,
+                    'Detail dan lokasi',
+                    minLines: 4,
+                    maxLines: 10,
+                  ),
                   Row(
                     children: [
                       const Expanded(
@@ -140,6 +190,28 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  const Text(
+                    'BLUEPRINT (opsional)',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_blueprints.isNotEmpty) ...[
+                    BlueprintGallery(
+                      items: _blueprints,
+                      onRemove: (i) => setState(() => _blueprints.removeAt(i)),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: _pickBlueprints,
+                    icon: const Icon(Icons.add_photo_alternate_outlined),
+                    label: const Text('Tambah gambar blueprint'),
+                  ),
+                  const SizedBox(height: 16),
                   const Text(
                     'TAG (opsional)',
                     style: TextStyle(
@@ -266,6 +338,28 @@ class _TagEditorState extends State<TagEditor> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Angka saja, otomatis diberi titik ribuan (21000 -> 21.000).
+class _ThousandsFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 9) digits = digits.substring(0, 9);
+    final out = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) out.write('.');
+      out.write(digits[i]);
+    }
+    final text = out.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

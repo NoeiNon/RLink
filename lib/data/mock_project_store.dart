@@ -21,7 +21,8 @@ class MockProjectStore {
         id: 'p_1',
         title: 'DV. Builder - Butcher Village',
         from: 'Your Majesty',
-        payment: 'Sekitar \$21.000',
+        paymentAmount: 21000,
+        paymentNote: 'sekitar',
         detail:
             'Lokasi: X 4256 | Y 114 | Z 988.\n'
             'Blueprint: intinya sebuah desa seperti Oliver.',
@@ -35,7 +36,7 @@ class MockProjectStore {
         id: 'p_2',
         title: 'DV. Resource - Pembersihan Sisa Build',
         from: 'Mandor',
-        payment: '\$2.500',
+        paymentAmount: 2500,
         detail:
             'Banyak chest yang terlantar setelah selesai ngebuild belum '
             'dibersihkan. Dan juga fence-fence yang disekitar belum '
@@ -63,7 +64,7 @@ class MockProjectStore {
         id: 'p_3',
         title: 'Duke - Tempat Mining',
         from: 'Duke',
-        payment: '\$1.200',
+        paymentAmount: 1200,
         detail: 'Rapikan area tambang dan pasang penerangan di semua lorong.',
         deadline: '1 minggu',
         maxWorkers: 2,
@@ -176,24 +177,28 @@ class MockProjectStore {
     required String author,
     required String title,
     required String from,
-    required String payment,
+    required int paymentAmount,
+    String paymentNote = '',
     required String detail,
     required String deadline,
     required int maxWorkers,
     List<String> tags = const [],
+    List<Blueprint> blueprints = const [],
   }) async {
     await _latency();
     final project = Project(
       id: 'p_${DateTime.now().microsecondsSinceEpoch}',
       title: title.trim(),
       from: from.trim(),
-      payment: payment.trim(),
+      paymentAmount: paymentAmount,
+      paymentNote: paymentNote.trim(),
       detail: detail.trim(),
       deadline: deadline.trim(),
       maxWorkers: maxWorkers,
       author: author,
       createdAt: DateTime.now(),
       tags: tags,
+      blueprints: blueprints,
     );
     _byServer.putIfAbsent(serverId, () => <Project>[]).insert(0, project);
     return project;
@@ -253,6 +258,36 @@ class MockProjectStore {
             ),
         ],
       );
+    });
+  }
+
+  /// Admin menambah gambar blueprint ke project.
+  /// TODO: simpan di storage backend, bukan di memori.
+  static Future<Project> addBlueprints({
+    required String serverId,
+    required String projectId,
+    required List<Blueprint> items,
+  }) async {
+    await _latency();
+    return _change(
+      serverId,
+      projectId,
+      (project) =>
+          project.copyWith(blueprints: [...project.blueprints, ...items]),
+    );
+  }
+
+  /// Admin menghapus satu gambar blueprint.
+  static Future<Project> removeBlueprint({
+    required String serverId,
+    required String projectId,
+    required int index,
+  }) async {
+    await _latency();
+    return _change(serverId, projectId, (project) {
+      if (index < 0 || index >= project.blueprints.length) return project;
+      final list = [...project.blueprints]..removeAt(index);
+      return project.copyWith(blueprints: list);
     });
   }
 }

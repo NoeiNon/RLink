@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 /// Status project diatur sistem mengikuti alurnya (bukan dipilih manual):
 /// available -> onProgress (ada yang claim) -> review (mark as done)
 /// -> finished (admin Accept) atau kembali ke onProgress (admin Decline).
@@ -25,6 +27,14 @@ class ProjectUpdate {
   final DateTime sentAt;
 }
 
+/// Gambar blueprint yang dilampirkan admin ke sebuah project.
+class Blueprint {
+  const Blueprint({required this.name, required this.bytes});
+
+  final String name;
+  final Uint8List bytes;
+}
+
 class Project {
   const Project({
     required this.id,
@@ -40,6 +50,7 @@ class Project {
     this.status = ProjectStatus.available,
     this.workers = const [],
     this.updates = const [],
+    this.blueprints = const [],
   });
 
   final String id;
@@ -57,6 +68,7 @@ class Project {
   final ProjectStatus status;
   final List<String> workers;
   final List<ProjectUpdate> updates;
+  final List<Blueprint> blueprints;
 
   bool hasWorker(String username) {
     final key = username.trim().toLowerCase();
@@ -74,6 +86,7 @@ class Project {
     ProjectStatus? status,
     List<String>? workers,
     List<ProjectUpdate>? updates,
+    List<Blueprint>? blueprints,
   }) {
     return Project(
       id: id,
@@ -89,6 +102,7 @@ class Project {
       status: status ?? this.status,
       workers: workers ?? this.workers,
       updates: updates ?? this.updates,
+      blueprints: blueprints ?? this.blueprints,
     );
   }
 }

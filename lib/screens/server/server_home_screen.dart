@@ -95,13 +95,6 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       selectedIcon: Icons.hardware_rounded,
     ),
     _Destination(
-      label: 'Blueprint',
-      title: 'Blueprint',
-      description: 'Kelola blueprint dan referensi bangunan untuk project.',
-      icon: Icons.architecture_outlined,
-      selectedIcon: Icons.architecture_rounded,
-    ),
-    _Destination(
       label: 'Anggota',
       title: 'Anggota',
       description:
@@ -110,6 +103,15 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
           'dan progress mereka.',
       icon: Icons.groups_outlined,
       selectedIcon: Icons.groups_rounded,
+    ),
+    _Destination(
+      label: 'Gaji',
+      title: 'Gaji',
+      description:
+          'Rekap gaji builder dari project yang sudah disetujui. '
+          'Fungsinya menyusul.',
+      icon: Icons.payments_outlined,
+      selectedIcon: Icons.payments_rounded,
     ),
     _lainnya,
   ];
@@ -124,15 +126,6 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
           'tiap saat, lalu mark as done kalau sudah selesai.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
-    ),
-    _Destination(
-      label: 'Blueprint',
-      title: 'Blueprint',
-      description:
-          'Lihat rencana dan blueprint bangunan. Kamu juga bisa '
-          'menambahkan referensi untuk project yang kamu ambil.',
-      icon: Icons.architecture_outlined,
-      selectedIcon: Icons.architecture_rounded,
     ),
     _Destination(
       label: 'Gaji',

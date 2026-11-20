@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
 import '../core/validators.dart';
-import '../data/mock_server_store.dart';
+import '../data/mock_auth_store.dart';
+import '../data/mock_server_store.dart' show ServerException;
 import '../widgets/auth_layout.dart';
 import 'home_screen.dart';
 
@@ -37,15 +38,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _loading = true);
 
-    // TODO: ganti dengan pendaftaran sungguhan setelah backend dipilih.
-    // Sekarang hanya simulasi: akun tidak benar-benar tersimpan.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+    try {
+      await MockAuthStore.register(
+        email: _emailController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
     if (!mounted) return;
-
-    MockServerStore.rememberUser(
-      email: _emailController.text,
-      username: _usernameController.text,
-    );
 
     // Hapus halaman Daftar dan Login dari riwayat, jadi tombol kembali
     // tidak membawa pengguna ke halaman login lagi.

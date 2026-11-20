@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/app_theme.dart';
+import '../../data/mock_project_store.dart';
 import '../../data/mock_server_store.dart';
+import '../../models/project.dart';
 import '../../models/server.dart';
 import '../../models/server_content.dart';
 import '../../widgets/auth_layout.dart';
@@ -111,7 +113,11 @@ class _OverviewTabState extends State<OverviewTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_isAdmin) _AdminPanel(token: widget.server.token),
+            _SummaryPanel(
+              serverId: widget.server.id,
+              isAdmin: _isAdmin,
+              token: widget.server.token,
+            ),
             Expanded(child: _buildMessages()),
             _InputBar(
               controller: _controller,
@@ -150,8 +156,9 @@ class _MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        message.author.isEmpty ? '?' : message.author[0].toUpperCase();
+    final initial = message.author.isEmpty
+        ? '?'
+        : message.author[0].toUpperCase();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -322,50 +329,99 @@ class _Stat {
   final String value;
 }
 
-/// Panel khusus admin di atas obrolan: token, ringkasan satu baris, dan
-/// (kalau dibuka) kotak statistik serta aktivitas terbaru. Bisa dilipat supaya
-/// obrolan tetap lega. Otomatis tertutup saat keyboard muncul.
-class _AdminPanel extends StatefulWidget {
-  const _AdminPanel({required this.token});
+/// Satu kejadian di kartu "Aktivitas terbaru".
+class _Activity {
+  const _Activity(this.who, this.what, this.at);
 
+  final String who;
+  final String what;
+  final DateTime at;
+}
+
+/// Panel di atas obrolan, bisa dilipat. Admin: token, tiga statistik, dan
+/// aktivitas terbaru. Builder: hanya "Project tersedia" dan aktivitas
+/// terbaru. Datanya dari project di server. Otomatis tertutup saat keyboard
+/// muncul supaya obrolan tetap lega.
+class _SummaryPanel extends StatefulWidget {
+  const _SummaryPanel({
+    required this.serverId,
+    required this.isAdmin,
+    required this.token,
+  });
+
+  final String serverId;
+  final bool isAdmin;
   final String token;
 
   @override
-  State<_AdminPanel> createState() => _AdminPanelState();
+  State<_SummaryPanel> createState() => _SummaryPanelState();
 }
 
-class _AdminPanelState extends State<_AdminPanel> {
+class _SummaryPanelState extends State<_SummaryPanel> {
   bool _expanded = false;
+  List<Project> _projects = const [];
 
-  // Sementara 0 semua, sampai fitur Project ada.
-  static const _stats = [
-    _Stat('Project tersedia', '0'),
-    _Stat('Sedang dikerjakan', '0'),
-    _Stat('Perlu review', '0'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final list = await MockProjectStore.list(widget.serverId);
+    if (!mounted) return;
+    setState(() => _projects = list);
+  }
+
+  int _count(ProjectStatus status) =>
+      _projects.where((p) => p.status == status).length;
+
+  List<_Activity> _activities() {
+    final items = <_Activity>[
+      for (final p in _projects) ...[
+        _Activity(p.author, 'membuat project “${p.title}”', p.createdAt),
+        for (final u in p.updates)
+          _Activity(u.author, 'mengirim update di “${p.title}”', u.sentAt),
+      ],
+    ]..sort((a, b) => b.at.compareTo(a.at));
+    return items.take(4).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final showDetails = _expanded && !keyboardOpen;
 
+    final stats = [
+      _Stat('Project tersedia', '${_count(ProjectStatus.available)}'),
+      if (widget.isAdmin) ...[
+        _Stat('Sedang dikerjakan', '${_count(ProjectStatus.onProgress)}'),
+        _Stat('Perlu review', '${_count(ProjectStatus.review)}'),
+      ],
+    ];
+
+    final summary = widget.isAdmin
+        ? '${stats[0].value} tersedia · '
+              '${stats[1].value} dikerjakan · '
+              '${stats[2].value} perlu review'
+        : '${stats[0].value} project tersedia';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _TokenStrip(token: widget.token),
+        if (widget.isAdmin) _TokenStrip(token: widget.token),
         InkWell(
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: () {
+            setState(() => _expanded = !_expanded);
+            if (_expanded) _load();
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    _expanded
-                        ? 'Ringkasan server'
-                        : '${_stats[0].value} tersedia · '
-                            '${_stats[1].value} dikerjakan · '
-                            '${_stats[2].value} perlu review',
+                    _expanded ? 'Ringkasan server' : summary,
                     style: const TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 12,
@@ -393,14 +449,14 @@ class _AdminPanelState extends State<_AdminPanel> {
                     children: [
                       Row(
                         children: [
-                          for (var i = 0; i < _stats.length; i++) ...[
+                          for (var i = 0; i < stats.length; i++) ...[
                             if (i > 0) const SizedBox(width: 10),
-                            Expanded(child: _StatTile(stat: _stats[i])),
+                            Expanded(child: _StatTile(stat: stats[i])),
                           ],
                         ],
                       ),
                       const SizedBox(height: 10),
-                      const _ActivityCard(),
+                      _ActivityCard(items: _activities()),
                     ],
                   ),
                 )
@@ -455,7 +511,9 @@ class _StatTile extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard();
+  const _ActivityCard({required this.items});
+
+  final List<_Activity> items;
 
   @override
   Widget build(BuildContext context) {
@@ -467,10 +525,10 @@ class _ActivityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: kFieldBorder),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Aktivitas terbaru',
             style: TextStyle(
               color: AppColors.textPrimary,
@@ -478,15 +536,57 @@ class _ActivityCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Belum ada aktivitas. Project dan progress akan muncul di sini.',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
+          const SizedBox(height: 4),
+          if (items.isEmpty)
+            const Text(
+              'Belum ada aktivitas. Project dan progress akan muncul di sini.',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            )
+          else
+            for (final item in items)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: item.who,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' ${item.what}',
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      timeAgo(item.at),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ],
       ),
     );
@@ -529,8 +629,10 @@ class _InputBar extends StatelessWidget {
                 hintText: 'Tulis pesan...',
                 filled: true,
                 fillColor: AppColors.surface,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
