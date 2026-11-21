@@ -65,14 +65,13 @@ class _OverviewTabState extends State<OverviewTab> {
 
   Future<void> _sync() async {
     if (_sending) return;
-    final messages = await MockServerStore.getMessages(widget.server.id);
-    if (!mounted) return;
-    if (messages.length != _messages.length ||
-        (messages.isNotEmpty && _messages.isNotEmpty && messages.last.id != _messages.last.id)) {
+    try {
+      final messages = await MockServerStore.getMessages(widget.server.id);
+      if (!mounted) return;
       setState(() {
         _messages = messages;
       });
-    }
+    } catch (_) {}
   }
 
   Future<void> _send() async {

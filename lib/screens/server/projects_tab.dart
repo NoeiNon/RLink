@@ -57,11 +57,11 @@ class _ProjectsTabState extends State<ProjectsTab> {
   }
 
   Future<void> _sync() async {
-    final list = await MockProjectStore.list(widget.server.id);
-    if (!mounted) return;
-    if (_projects == null || list.length != _projects!.length) {
+    try {
+      final list = await MockProjectStore.list(widget.server.id);
+      if (!mounted) return;
       setState(() => _projects = list);
-    }
+    } catch (_) {}
   }
 
   List<Project> _visible(List<Project> all) {

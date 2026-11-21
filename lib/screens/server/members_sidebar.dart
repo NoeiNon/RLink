@@ -52,11 +52,11 @@ class _MembersSidebarState extends State<MembersSidebar> {
   }
 
   Future<void> _sync() async {
-    final list = await MockServerStore.getMembers(widget.server.id);
-    if (!mounted) return;
-    if (_members == null || list.length != _members!.length) {
+    try {
+      final list = await MockServerStore.getMembers(widget.server.id);
+      if (!mounted) return;
       setState(() => _members = list);
-    }
+    } catch (_) {}
   }
 
   Widget _group(String title, List<ServerMember> items, Color nameColor) {
