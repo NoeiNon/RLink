@@ -1,24 +1,8 @@
+export '../core/auth_exceptions.dart';
+import '../core/auth_exceptions.dart';
+import '../core/supabase_config.dart';
 import 'mock_server_store.dart' show ServerException;
-
-/// Dilempar saat email belum terdaftar, supaya layar login bisa mengarahkan
-/// pengguna ke halaman Daftar.
-class AccountNotFoundException extends ServerException {
-  const AccountNotFoundException()
-      : super('Akun belum terdaftar. Silakan daftar terlebih dahulu.');
-}
-
-class WrongPasswordException extends ServerException {
-  const WrongPasswordException() : super('Password salah.');
-}
-
-class EmailTakenException extends ServerException {
-  const EmailTakenException()
-      : super('Email ini sudah terdaftar. Silakan masuk.');
-}
-
-class UsernameTakenException extends ServerException {
-  const UsernameTakenException() : super('Username ini sudah dipakai.');
-}
+import 'supabase_auth_store.dart';
 
 class _Account {
   const _Account({required this.username, required this.password});
@@ -27,14 +11,7 @@ class _Account {
   final String password;
 }
 
-/// Akun contoh di memori (hilang saat app di-restart).
-///
-/// TODO: ganti dengan backend auth sungguhan. Di backend, password WAJIB
-/// disimpan sebagai hash (bcrypt/argon2), bukan teks biasa, dan pembatasan
-/// percobaan login serta pemeriksaan email/username unik harus dilakukan di
-/// server, karena pemeriksaan di aplikasi bisa dilewati.
-///
-/// Akun demo: admin@rf.test / admin123 dan builder@rf.test / builder123.
+/// Akun contoh di memori atau beralih ke Supabase saat konfigurasi tersedia.
 class MockAuthStore {
   MockAuthStore._();
 
@@ -57,12 +34,20 @@ class MockAuthStore {
   static Future<void> _latency() =>
       Future<void>.delayed(const Duration(milliseconds: 500));
 
-  /// Daftar akun baru. Email dan username harus belum dipakai.
+  /// Daftar akun baru.
   static Future<void> register({
     required String email,
     required String username,
     required String password,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseAuthStore.register(
+        email: email,
+        username: username,
+        password: password,
+      );
+    }
+
     await _latency();
     final key = _email(email);
     final name = username.trim();
@@ -78,11 +63,18 @@ class MockAuthStore {
     _accounts[key] = _Account(username: name, password: password);
   }
 
-  /// Masuk. Mengembalikan username akun. Akun yang belum terdaftar ditolak.
+  /// Masuk. Mengembalikan username akun.
   static Future<String> login({
     required String email,
     required String password,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseAuthStore.login(
+        email: email,
+        password: password,
+      );
+    }
+
     await _latency();
     final key = _email(email);
 

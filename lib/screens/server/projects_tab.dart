@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
@@ -31,6 +33,7 @@ class _ProjectsTabState extends State<ProjectsTab> {
   List<Project>? _projects;
   String _query = '';
   String _filter = 'all';
+  Timer? _timer;
 
   bool get _isBuilder => widget.role == ServerRole.builder;
 
@@ -38,12 +41,27 @@ class _ProjectsTabState extends State<ProjectsTab> {
   void initState() {
     super.initState();
     _load();
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _sync());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
     final list = await MockProjectStore.list(widget.server.id);
     if (!mounted) return;
     setState(() => _projects = list);
+  }
+
+  Future<void> _sync() async {
+    final list = await MockProjectStore.list(widget.server.id);
+    if (!mounted) return;
+    if (_projects == null || list.length != _projects!.length) {
+      setState(() => _projects = list);
+    }
   }
 
   List<Project> _visible(List<Project> all) {

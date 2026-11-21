@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
@@ -22,11 +24,19 @@ class MembersSidebar extends StatefulWidget {
 
 class _MembersSidebarState extends State<MembersSidebar> {
   List<ServerMember>? _members;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _sync());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -39,6 +49,14 @@ class _MembersSidebarState extends State<MembersSidebar> {
     final list = await MockServerStore.getMembers(widget.server.id);
     if (!mounted) return;
     setState(() => _members = list);
+  }
+
+  Future<void> _sync() async {
+    final list = await MockServerStore.getMembers(widget.server.id);
+    if (!mounted) return;
+    if (_members == null || list.length != _members!.length) {
+      setState(() => _members = list);
+    }
   }
 
   Widget _group(String title, List<ServerMember> items, Color nameColor) {

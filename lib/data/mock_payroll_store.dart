@@ -1,7 +1,9 @@
+import '../core/supabase_config.dart';
 import '../models/payroll.dart';
 import '../models/project.dart';
 import 'mock_project_store.dart';
 import 'mock_server_store.dart' show ServerException;
+import 'supabase_payroll_store.dart';
 
 class _Rating {
   const _Rating(this.scores, this.overall);
@@ -72,6 +74,9 @@ class MockPayrollStore {
   }
 
   static Future<PayrollData> load(String serverId) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabasePayrollStore.load(serverId);
+    }
     final unpaid = await _unpaid(serverId);
     final paid = List<Payout>.of(_payouts[serverId] ?? const <Payout>[])
       ..sort((a, b) => b.paidAt.compareTo(a.paidAt));
@@ -85,6 +90,14 @@ class MockPayrollStore {
     required Map<String, int> scores,
     required int overall,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabasePayrollStore.rate(
+        serverId: serverId,
+        projectId: projectId,
+        scores: scores,
+        overall: overall,
+      );
+    }
     final unpaid = await _unpaid(serverId);
     final targets = unpaid.where((r) => r.project.id == projectId).toList();
     if (targets.isEmpty) {
@@ -109,6 +122,14 @@ class MockPayrollStore {
     List<SlipLine> bonuses = const [],
     List<SlipLine> deductions = const [],
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabasePayrollStore.payWorker(
+        serverId: serverId,
+        worker: worker,
+        bonuses: bonuses,
+        deductions: deductions,
+      );
+    }
     final unpaid = await _unpaid(serverId);
     final mine = unpaid
         .where((r) => r.rated && r.worker.toLowerCase() == worker.toLowerCase())

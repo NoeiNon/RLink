@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -34,6 +36,7 @@ class _OverviewTabState extends State<OverviewTab> {
   List<ChatMessage> _messages = const [];
   bool _loading = true;
   bool _sending = false;
+  Timer? _timer;
 
   bool get _isAdmin => widget.role == ServerRole.admin;
 
@@ -41,10 +44,12 @@ class _OverviewTabState extends State<OverviewTab> {
   void initState() {
     super.initState();
     _load();
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) => _sync());
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -56,6 +61,18 @@ class _OverviewTabState extends State<OverviewTab> {
       _messages = messages;
       _loading = false;
     });
+  }
+
+  Future<void> _sync() async {
+    if (_sending) return;
+    final messages = await MockServerStore.getMessages(widget.server.id);
+    if (!mounted) return;
+    if (messages.length != _messages.length ||
+        (messages.isNotEmpty && _messages.isNotEmpty && messages.last.id != _messages.last.id)) {
+      setState(() {
+        _messages = messages;
+      });
+    }
   }
 
   Future<void> _send() async {

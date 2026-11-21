@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import '../core/supabase_config.dart';
 import '../models/server.dart';
 import '../models/server_content.dart';
+import 'supabase_server_store.dart';
 
 /// Error yang pesannya aman ditampilkan langsung ke pengguna.
 class ServerException implements Exception {
@@ -109,6 +111,14 @@ class MockServerStore {
     required int colorIndex,
     required int iconIndex,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.create(
+        name: name,
+        username: username,
+        colorIndex: colorIndex,
+        iconIndex: iconIndex,
+      );
+    }
     await _latency();
     if (_countRole(username, ServerRole.admin) >= maxCreated) {
       throw ServerException(
@@ -135,6 +145,9 @@ class MockServerStore {
     required String token,
     required String username,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.join(token: token, username: username);
+    }
     await _latency();
     final normalized = token.trim().toUpperCase();
 
@@ -198,6 +211,9 @@ class MockServerStore {
 
   /// Semua server yang diikuti akun ini beserta perannya di tiap server.
   static Future<List<ServerMembership>> getMemberships(String username) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.getMemberships(username);
+    }
     final key = _key(username);
     final result = <ServerMembership>[];
     for (final server in _servers) {
@@ -213,6 +229,9 @@ class MockServerStore {
   /// terdaftar; kalau tidak ketemu, dipakai nama kecilnya.
   /// TODO: backend harus mengembalikan nama dan peran saja, tanpa email.
   static Future<List<ServerMember>> getMembers(String serverId) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.getMembers(serverId);
+    }
     await _latency();
     final names = {
       for (final name in _usernames.values) name.toLowerCase(): name,
@@ -240,6 +259,9 @@ class MockServerStore {
     required String serverId,
     required String username,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.leave(serverId: serverId, username: username);
+    }
     await _latency();
     final key = _key(username);
     final members = _members[serverId];
@@ -261,6 +283,9 @@ class MockServerStore {
   // ---- Obrolan (Discussion) ----
 
   static Future<List<ChatMessage>> getMessages(String serverId) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.getMessages(serverId);
+    }
     return List<ChatMessage>.of(_messages[serverId] ?? const <ChatMessage>[]);
   }
 
@@ -270,6 +295,14 @@ class MockServerStore {
     required bool isAdmin,
     required String text,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.postMessage(
+        serverId: serverId,
+        author: author,
+        isAdmin: isAdmin,
+        text: text,
+      );
+    }
     final message = ChatMessage(
       id: 'm_${_messageCounter++}',
       author: author,
@@ -284,6 +317,9 @@ class MockServerStore {
   // ---- SOP ----
 
   static Future<SopDocument> getSop(String serverId) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.getSop(serverId);
+    }
     await _latency();
     return _sops[serverId] ?? const SopDocument(text: '');
   }
@@ -292,6 +328,9 @@ class MockServerStore {
     required String serverId,
     required String text,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.saveSop(serverId: serverId, text: text);
+    }
     await _latency();
     final document = SopDocument(text: text.trim(), updatedAt: DateTime.now());
     _sops[serverId] = document;

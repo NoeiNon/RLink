@@ -1,5 +1,7 @@
+import '../core/supabase_config.dart';
 import '../models/project.dart';
 import 'mock_server_store.dart' show ServerException;
+import 'supabase_project_store.dart';
 
 /// Data project contoh, disimpan di memori (hilang saat app di-restart).
 /// Hanya server demo (s_0) yang berisi project; server baru masih kosong
@@ -90,6 +92,9 @@ class MockProjectStore {
       Future<void>.delayed(const Duration(milliseconds: 300));
 
   static Future<List<Project>> list(String serverId) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.list(serverId);
+    }
     await _latency();
     return List<Project>.of(_byServer[serverId] ?? const <Project>[]);
   }
@@ -113,6 +118,13 @@ class MockProjectStore {
     required String projectId,
     required String username,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.claim(
+        serverId: serverId,
+        projectId: projectId,
+        username: username,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (project.hasWorker(username)) {
@@ -139,6 +151,15 @@ class MockProjectStore {
     required String text,
     List<Blueprint> photos = const [],
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.addUpdate(
+        serverId: serverId,
+        projectId: projectId,
+        author: author,
+        text: text,
+        photos: photos,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (text.trim().isEmpty && photos.isEmpty) {
@@ -172,6 +193,13 @@ class MockProjectStore {
     required String projectId,
     required String username,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.markDone(
+        serverId: serverId,
+        projectId: projectId,
+        username: username,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (!project.hasWorker(username)) {
@@ -200,6 +228,21 @@ class MockProjectStore {
     List<String> tags = const [],
     List<Blueprint> blueprints = const [],
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.create(
+        serverId: serverId,
+        author: author,
+        title: title,
+        from: from,
+        paymentAmount: paymentAmount,
+        paymentNote: paymentNote,
+        detail: detail,
+        deadline: deadline,
+        maxWorkers: maxWorkers,
+        tags: tags,
+        blueprints: blueprints,
+      );
+    }
     await _latency();
     final project = Project(
       id: 'p_${DateTime.now().microsecondsSinceEpoch}',
@@ -225,6 +268,13 @@ class MockProjectStore {
     required String projectId,
     required List<String> tags,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.setTags(
+        serverId: serverId,
+        projectId: projectId,
+        tags: tags,
+      );
+    }
     await _latency();
     return _change(
       serverId,
@@ -238,6 +288,12 @@ class MockProjectStore {
     required String serverId,
     required String projectId,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.accept(
+        serverId: serverId,
+        projectId: projectId,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (project.status != ProjectStatus.review) {
@@ -255,6 +311,14 @@ class MockProjectStore {
     required String reviewer,
     String reason = '',
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.decline(
+        serverId: serverId,
+        projectId: projectId,
+        reviewer: reviewer,
+        reason: reason,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (project.status != ProjectStatus.review) {
@@ -277,12 +341,18 @@ class MockProjectStore {
   }
 
   /// Admin menambah gambar blueprint ke project.
-  /// TODO: simpan di storage backend, bukan di memori.
   static Future<Project> addBlueprints({
     required String serverId,
     required String projectId,
     required List<Blueprint> items,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.addBlueprints(
+        serverId: serverId,
+        projectId: projectId,
+        items: items,
+      );
+    }
     await _latency();
     return _change(
       serverId,
@@ -298,6 +368,13 @@ class MockProjectStore {
     required String projectId,
     required int index,
   }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseProjectStore.removeBlueprint(
+        serverId: serverId,
+        projectId: projectId,
+        index: index,
+      );
+    }
     await _latency();
     return _change(serverId, projectId, (project) {
       if (index < 0 || index >= project.blueprints.length) return project;
