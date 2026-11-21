@@ -33,10 +33,11 @@ class ProjectUpdate {
 
 /// Gambar blueprint yang dilampirkan admin ke sebuah project.
 class Blueprint {
-  const Blueprint({required this.name, required this.bytes});
+  const Blueprint({required this.name, required this.bytes, this.url});
 
   final String name;
   final Uint8List bytes;
+  final String? url;
 }
 
 class Project {

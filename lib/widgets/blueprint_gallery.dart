@@ -44,6 +44,30 @@ Future<List<Blueprint>> pickBlueprints(
 void previewBlueprint(BuildContext context, Blueprint item) =>
     const BlueprintGallery(items: <Blueprint>[])._preview(context, item);
 
+Widget buildBlueprintImage(Blueprint item, {BoxFit fit = BoxFit.cover}) {
+  if (item.url != null && item.url!.isNotEmpty) {
+    return Image.network(
+      item.url!,
+      fit: fit,
+      errorBuilder: (_, _, _) => item.bytes.isNotEmpty
+          ? Image.memory(item.bytes, fit: fit)
+          : const Center(
+              child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+            ),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      },
+    );
+  }
+  if (item.bytes.isNotEmpty) {
+    return Image.memory(item.bytes, fit: fit);
+  }
+  return const Center(
+    child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+  );
+}
+
 /// Galeri besar yang bisa digeser ke samping (tampilan di kartu project).
 class BlueprintCarousel extends StatelessWidget {
   const BlueprintCarousel({super.key, required this.items, this.height = 170});
@@ -71,7 +95,7 @@ class BlueprintCarousel extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: () => previewBlueprint(context, items[i]),
-                    child: Image.memory(items[i].bytes, fit: BoxFit.cover),
+                    child: buildBlueprintImage(items[i]),
                   ),
                   if (multi)
                     Positioned(
@@ -124,7 +148,7 @@ class BlueprintGallery extends StatelessWidget {
               child: InteractiveViewer(
                 maxScale: 6,
                 child: Center(
-                  child: Image.memory(item.bytes, fit: BoxFit.contain),
+                  child: buildBlueprintImage(item, fit: BoxFit.contain),
                 ),
               ),
             ),
@@ -160,12 +184,7 @@ class BlueprintGallery extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
                       onTap: () => _preview(context, items[i]),
-                      child: Image.memory(
-                        items[i].bytes,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            const Icon(Icons.broken_image_outlined),
-                      ),
+                      child: buildBlueprintImage(items[i]),
                     ),
                   ),
                 ),

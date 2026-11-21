@@ -58,7 +58,8 @@ class SupabaseProjectStore {
             .map((b) {
               return Blueprint(
                 name: b['name'] as String? ?? '',
-                bytes: Uint8List(0), // Byte placeholder
+                bytes: Uint8List(0),
+                url: b['file_url'] as String?,
               );
             })
             .toList();
@@ -141,6 +142,7 @@ class SupabaseProjectStore {
       final projectId = insertRes['id'] as String;
 
       // Upload blueprints jika ada
+      final uploadedBlueprints = <Blueprint>[];
       if (blueprints.isNotEmpty) {
         for (var i = 0; i < blueprints.length; i++) {
           final b = blueprints[i];
@@ -158,8 +160,15 @@ class SupabaseProjectStore {
               'file_path': fileName,
               'file_url': fileUrl,
             });
+
+            uploadedBlueprints.add(Blueprint(
+              name: b.name,
+              bytes: b.bytes,
+              url: fileUrl,
+            ));
           } catch (storageErr) {
             debugPrint('Failed to upload blueprint: $storageErr');
+            uploadedBlueprints.add(b);
           }
         }
       }
@@ -179,7 +188,7 @@ class SupabaseProjectStore {
         status: ProjectStatus.available,
         workers: const [],
         updates: const [],
-        blueprints: blueprints,
+        blueprints: uploadedBlueprints.isNotEmpty ? uploadedBlueprints : blueprints,
       );
     } catch (e) {
       throw ServerException('Gagal membuat project: ${e.toString()}');
