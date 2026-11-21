@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
+import '../core/session_manager.dart';
 import '../widgets/auth_layout.dart';
 import 'create_server_screen.dart';
 import 'join_server_screen.dart';
@@ -16,6 +17,7 @@ class HomeScreen extends StatelessWidget {
   final String username;
 
   void _logout(BuildContext context) {
+    SessionManager.clearSession();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
       (route) => false,

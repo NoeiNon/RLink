@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
+import '../core/session_manager.dart';
 import '../core/validators.dart';
 import '../data/mock_auth_store.dart';
 import '../data/mock_server_store.dart' show ServerException;
@@ -65,11 +66,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     if (!mounted) return;
 
+    final uname = _usernameController.text.trim();
+    await SessionManager.recordActivity(uname);
+
     // Hapus halaman Daftar dan Login dari riwayat, jadi tombol kembali
     // tidak membawa pengguna ke halaman login lagi.
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
-        builder: (_) => HomeScreen(username: _usernameController.text.trim()),
+        builder: (_) => HomeScreen(username: uname),
       ),
       (route) => false,
     );

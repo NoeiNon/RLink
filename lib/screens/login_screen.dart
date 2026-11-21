@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
+import '../core/session_manager.dart';
 import '../core/validators.dart';
 import '../data/mock_auth_store.dart';
 import '../data/mock_server_store.dart' show ServerException;
@@ -49,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+      await SessionManager.recordActivity(username);
       if (!mounted) return;
       await openStartScreen(context, username);
     } on AccountNotFoundException catch (e) {

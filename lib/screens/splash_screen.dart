@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
+import '../core/session_manager.dart';
+import 'app_router.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,20 +39,25 @@ class _SplashScreenState extends State<SplashScreen>
     _timer = Timer(AppConstants.splashDuration, _goNext);
   }
 
-  void _goNext() {
+  Future<void> _goNext() async {
     if (!mounted) return;
 
-    // TODO: nanti cek status login di sini.
-    // Sudah login -> ke beranda server (admin / builder), belum -> LoginScreen.
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const LoginScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-            FadeTransition(opacity: animation, child: child),
-      ),
-    );
+    final loggedInUsername = await SessionManager.checkSession();
+    if (!mounted) return;
+
+    if (loggedInUsername != null && loggedInUsername.isNotEmpty) {
+      await openStartScreen(context, loggedInUsername);
+    } else {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder<void>(
+          transitionDuration: const Duration(milliseconds: 500),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      );
+    }
   }
 
   @override
