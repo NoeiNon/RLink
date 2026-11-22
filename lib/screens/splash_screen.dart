@@ -69,58 +69,77 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Gaya sama seperti login/register: latar gradient + kartu kecil di tengah.
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: FadeTransition(
-                  opacity: _fade,
-                  child: ScaleTransition(
-                    scale: _scale,
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _LogoMark(),
-                        SizedBox(height: 4),
-                        Text(
-                          AppConstants.appName,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
+      backgroundColor: AppColors.background,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2A2250), Color(0xFF5865F2)],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: FadeTransition(
+              opacity: _fade,
+              child: ScaleTransition(
+                scale: _scale,
+                child: Container(
+                  width: 260,
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x66000000),
+                        blurRadius: 32,
+                        offset: Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _LogoMark(),
+                      SizedBox(height: 10),
+                      Text(
+                        AppConstants.appName,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          AppConstants.tagline,
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 14,
-                            letterSpacing: 1.5,
-                          ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        AppConstants.tagline,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11.5,
+                          letterSpacing: 1.2,
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 20),
+                      SizedBox(
+                        width: 120,
+                        child: LinearProgressIndicator(
+                          minHeight: 2,
+                          color: AppColors.primary,
+                          backgroundColor: Color(0x33FFFFFF),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 40),
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -137,11 +156,11 @@ class _LogoMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/images/logo.webp',
-      width: 240,
+      width: 120,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) => const Icon(
         Icons.construction_rounded,
-        size: 96,
+        size: 56,
         color: AppColors.accent,
       ),
     );
