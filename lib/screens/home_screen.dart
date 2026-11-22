@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
-import '../core/session_manager.dart';
 import '../widgets/auth_layout.dart';
+import 'app_router.dart';
 import 'create_server_screen.dart';
 import 'join_server_screen.dart';
-import 'login_screen.dart';
 
 /// Halaman depan untuk akun yang belum punya server (seperti Discord saat
 /// baru daftar). Dua pilihan: buat server sendiri (jadi admin) atau gabung
@@ -16,13 +15,7 @@ class HomeScreen extends StatelessWidget {
 
   final String username;
 
-  void _logout(BuildContext context) {
-    SessionManager.clearSession();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
+  void _logout(BuildContext context) => logoutToLogin(context);
 
   void _openCreateServer(BuildContext context) {
     Navigator.of(context).push(

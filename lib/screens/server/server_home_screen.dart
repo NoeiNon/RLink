@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
-import '../../core/session_manager.dart';
 import '../../models/server.dart';
 import '../../widgets/app_feedback.dart';
 import '../../data/mock_server_store.dart';
 import '../app_router.dart';
-import '../login_screen.dart';
 import 'more_tab.dart';
 import 'members_sidebar.dart';
 import 'overview_tab.dart';
@@ -92,7 +90,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description: 'Buat dan publish project, atur judul, deskripsi, blueprint '
+      description:
+          'Buat dan publish project, atur judul, deskripsi, blueprint '
           'dan tags. Cek progress builder, lalu Accept atau Decline hasilnya.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -100,7 +99,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Gaji',
       title: 'Gaji',
-      description: 'Rekap gaji builder dari project yang sudah disetujui. '
+      description:
+          'Rekap gaji builder dari project yang sudah disetujui. '
           'Fungsinya menyusul.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
@@ -113,7 +113,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Project',
       title: 'Project',
-      description: 'Lihat project yang tersedia, claim, upload progress '
+      description:
+          'Lihat project yang tersedia, claim, upload progress '
           'tiap saat, lalu mark as done kalau sudah selesai.',
       icon: Icons.hardware_outlined,
       selectedIcon: Icons.hardware_rounded,
@@ -121,7 +122,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     _Destination(
       label: 'Gaji',
       title: 'Gaji',
-      description: 'Saldo dan riwayat gaji dari project yang sudah '
+      description:
+          'Saldo dan riwayat gaji dari project yang sudah '
           'disetujui admin.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
@@ -141,7 +143,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       icon: Icons.logout_rounded,
       color: kErrorColor,
       title: 'Tinggalkan server?',
-      message: 'Kamu akan keluar dari ${widget.server.name}. Kamu bisa '
+      message:
+          'Kamu akan keluar dari ${widget.server.name}. Kamu bisa '
           'bergabung lagi nanti dengan token dari admin.',
       confirmLabel: 'Tinggalkan',
     );
@@ -161,12 +164,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     await openStartScreen(context, widget.username);
   }
 
-  void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
+  void _logout() => logoutToLogin(context);
 
   Widget _buildPage() {
     if (_index == 0) {
@@ -182,10 +180,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
           return Row(
             children: [
               Expanded(child: overview),
-              MembersSidebar(
-                server: widget.server,
-                username: widget.username,
-              ),
+              MembersSidebar(server: widget.server, username: widget.username),
             ],
           );
         },
@@ -343,10 +338,12 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        isAdmin ? const Color(0x335865F2) : const Color(0x333BA55D);
-    final foreground =
-        isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C);
+    final background = isAdmin
+        ? const Color(0x335865F2)
+        : const Color(0x333BA55D);
+    final foreground = isAdmin
+        ? const Color(0xFFB5BCFF)
+        : const Color(0xFF6FD08C);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
