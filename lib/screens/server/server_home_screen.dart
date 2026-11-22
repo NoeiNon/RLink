@@ -164,6 +164,72 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     await openStartScreen(context, widget.username);
   }
 
+  /// Hapus server permanen (khusus boss), dikonfirmasi 3 langkah:
+  /// 1) tekan "Hapus server", 2) setujui peringatan, 3) ketik ulang nama
+  /// server lalu konfirmasi "Hapus permanen".
+  Future<void> _deleteServer() async {
+    final serverName = widget.server.name;
+
+    final first = await showConfirmDialog(
+      context,
+      icon: Icons.delete_forever_rounded,
+      color: kErrorColor,
+      title: 'Hapus server?',
+      message: 'Kamu akan menghapus $serverName. Semua anggota, project, '
+          'SOP, dan obrolan di server ini ikut hilang.',
+      confirmLabel: 'Lanjutkan',
+    );
+    if (first != true || !mounted) return;
+
+    final controller = TextEditingController();
+    final matches = ValueNotifier<bool>(false);
+    controller.addListener(() {
+      matches.value = controller.text.trim() == serverName;
+    });
+
+    final second = await showConfirmDialog(
+      context,
+      icon: Icons.warning_amber_rounded,
+      color: kErrorColor,
+      title: 'Hapus permanen?',
+      message: 'Tindakan ini tidak bisa dibatalkan. Ketik nama server '
+          '"$serverName" persis seperti tertulis untuk memastikan.',
+      confirmLabel: 'Hapus permanen',
+      body: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: serverName,
+          isDense: true,
+          filled: true,
+        ),
+      ),
+      confirmEnabled: matches,
+    );
+
+    // Tunggu animasi dialog selesai sebelum membuang controller.
+    Future<void>.delayed(const Duration(milliseconds: 400), () {
+      controller.dispose();
+      matches.dispose();
+    });
+
+    if (second != true || !mounted) return;
+
+    try {
+      await MockServerStore.deleteServer(
+        serverId: widget.server.id,
+        username: widget.username,
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      showToast(context, e.message);
+      return;
+    }
+    if (!mounted) return;
+    showToast(context, 'Server "$serverName" sudah dihapus.');
+    await openStartScreen(context, widget.username);
+  }
+
   void _logout() => logoutToLogin(context);
 
   Widget _buildPage() {
@@ -199,6 +265,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
         role: widget.role,
         server: widget.server,
         onLeaveServer: _leaveServer,
+        onDeleteServer: _deleteServer,
         onLogout: _logout,
       );
     }

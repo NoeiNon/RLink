@@ -27,12 +27,14 @@ class MoreTab extends StatelessWidget {
     required this.role,
     required this.server,
     required this.onLeaveServer,
+    required this.onDeleteServer,
     required this.onLogout,
   });
 
   final ServerRole role;
   final ServerInfo server;
   final VoidCallback onLeaveServer;
+  final VoidCallback onDeleteServer;
   final VoidCallback onLogout;
 
   bool get _isAdmin => role == ServerRole.admin;
@@ -102,6 +104,14 @@ class MoreTab extends StatelessWidget {
             title: 'Tinggalkan server',
             danger: true,
             onTap: onLeaveServer,
+          ),
+        // Khusus boss: hapus server permanen (dikonfirmasi 3 langkah).
+        if (_isAdmin)
+          _MenuTile(
+            icon: Icons.delete_forever_rounded,
+            title: 'Hapus server',
+            danger: true,
+            onTap: onDeleteServer,
           ),
         _MenuTile(
           icon: Icons.logout_rounded,

@@ -295,6 +295,50 @@ class SupabaseServerStore {
     }
   }
 
+  /// Hapus server secara permanen. Hanya boss (admin) server itu yang boleh.
+  /// Penting: aturan ini juga harus dijaga di Supabase (policy DELETE di tabel
+  /// `servers` khusus boss, dan data turunan ikut terhapus lewat ON DELETE
+  /// CASCADE), karena pemeriksaan di aplikasi bisa dilewati.
+  static Future<void> deleteServer({
+    required String serverId,
+    required String username,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final memberRow = await _client
+          .from('server_members')
+          .select('role')
+          .eq('server_id', serverId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (memberRow == null || memberRow['role'] != 'admin') {
+        throw const ServerException(
+          'Hanya boss server yang bisa menghapus server ini.',
+        );
+      }
+
+      // select() supaya kelihatan kalau tidak ada baris yang terhapus
+      // (misalnya ditolak policy), bukan diam-diam dianggap berhasil.
+      final deleted = await _client
+          .from('servers')
+          .delete()
+          .eq('id', serverId)
+          .select('id');
+
+      if ((deleted as List).isEmpty) {
+        throw const ServerException(
+          'Server gagal dihapus. Coba lagi atau hubungi admin aplikasi.',
+        );
+      }
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Gagal menghapus server: ${e.toString()}');
+    }
+  }
+
   // ---- Obrolan (Discussion) ----
 
   static Future<List<ChatMessage>> getMessages(String serverId) async {

@@ -280,6 +280,33 @@ class MockServerStore {
     if (_lastServer[key] == serverId) _lastServer.remove(key);
   }
 
+  /// Hapus server secara permanen. Hanya boss (admin) server itu yang boleh.
+  /// Anggota, obrolan, dan SOP server ikut dihapus.
+  static Future<void> deleteServer({
+    required String serverId,
+    required String username,
+  }) async {
+    if (SupabaseConfig.isConfigured) {
+      return SupabaseServerStore.deleteServer(
+        serverId: serverId,
+        username: username,
+      );
+    }
+    await _latency();
+    final role = _members[serverId]?[_key(username)];
+    if (role != ServerRole.admin) {
+      throw const ServerException(
+        'Hanya boss server yang bisa menghapus server ini.',
+      );
+    }
+
+    _servers.removeWhere((server) => server.id == serverId);
+    _members.remove(serverId);
+    _messages.remove(serverId);
+    _sops.remove(serverId);
+    _lastServer.removeWhere((_, id) => id == serverId);
+  }
+
   // ---- Obrolan (Discussion) ----
 
   static Future<List<ChatMessage>> getMessages(String serverId) async {
