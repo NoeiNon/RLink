@@ -31,9 +31,10 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scale = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
 
     _timer = Timer(AppConstants.splashDuration, _goNext);
@@ -69,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Gaya sama seperti login/register: latar gradient + kartu kecil di tengah.
+    // Gaya sama seperti login/register: latar gradient + isi kecil dan rapi di tengah.
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Container(
@@ -86,21 +87,9 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _fade,
               child: ScaleTransition(
                 scale: _scale,
-                child: Container(
+                child: const SizedBox(
                   width: 260,
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x66000000),
-                        blurRadius: 32,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: const Column(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _LogoMark(),
@@ -109,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                         AppConstants.appName,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -120,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
                         AppConstants.tagline,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColors.textMuted,
+                          color: Color(0xCCFFFFFF),
                           fontSize: 11.5,
                           letterSpacing: 1.2,
                         ),
@@ -130,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 120,
                         child: LinearProgressIndicator(
                           minHeight: 2,
-                          color: AppColors.primary,
+                          color: Colors.white,
                           backgroundColor: Color(0x33FFFFFF),
                         ),
                       ),
