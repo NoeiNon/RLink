@@ -175,7 +175,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       icon: Icons.delete_forever_rounded,
       color: kErrorColor,
       title: 'Hapus server?',
-      message: 'Kamu akan menghapus $serverName. Semua anggota, project, '
+      message:
+          'Kamu akan menghapus $serverName. Semua anggota, project, '
           'SOP, dan obrolan di server ini ikut hilang.',
       confirmLabel: 'Lanjutkan',
     );
@@ -192,7 +193,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       icon: Icons.warning_amber_rounded,
       color: kErrorColor,
       title: 'Hapus permanen?',
-      message: 'Tindakan ini tidak bisa dibatalkan. Ketik nama server '
+      message:
+          'Tindakan ini tidak bisa dibatalkan. Ketik nama server '
           '"$serverName" persis seperti tertulis untuk memastikan.',
       confirmLabel: 'Hapus permanen',
       body: TextField(

@@ -50,10 +50,7 @@ class MockServerStore {
 
   /// Anggota tiap server: id server -> (username huruf kecil -> peran).
   static final Map<String, Map<String, ServerRole>> _members = {
-    's_0': {
-      'admindemo': ServerRole.admin,
-      'builderdemo': ServerRole.builder,
-    },
+    's_0': {'admindemo': ServerRole.admin, 'builderdemo': ServerRole.builder},
   };
 
   static final Map<String, List<ChatMessage>> _messages = {
@@ -62,7 +59,8 @@ class MockServerStore {
         id: 'm_0',
         author: 'AdminDemo',
         isAdmin: true,
-        text: 'Selamat datang di Etharia Builders! Baca SOP di tab Lainnya '
+        text:
+            'Selamat datang di Etharia Builders! Baca SOP di tab Lainnya '
             'sebelum mulai.',
         sentAt: DateTime.now().subtract(const Duration(minutes: 12)),
       ),
@@ -78,7 +76,8 @@ class MockServerStore {
 
   static final Map<String, SopDocument> _sops = {
     's_0': SopDocument(
-      text: 'SOP Kerja\n\n'
+      text:
+          'SOP Kerja\n\n'
           '1. Ambil project lewat tab Project sebelum mulai bekerja.\n'
           '2. Upload progress secara berkala, jangan menunggu selesai.\n'
           '3. Tekan Mark as Done hanya kalau pekerjaan benar-benar selesai.\n'
@@ -237,8 +236,8 @@ class MockServerStore {
       for (final name in _usernames.values) name.toLowerCase(): name,
     };
     final result = [
-      for (final entry in (_members[serverId] ?? const <String, ServerRole>{})
-          .entries)
+      for (final entry
+          in (_members[serverId] ?? const <String, ServerRole>{}).entries)
         ServerMember(name: names[entry.key] ?? entry.key, role: entry.value),
     ];
     result.sort((a, b) {

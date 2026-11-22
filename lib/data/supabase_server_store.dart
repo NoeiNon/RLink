@@ -35,7 +35,9 @@ class SupabaseServerStore {
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) {
-      throw const ServerException('Sesi masuk berakhir. Silakan login kembali.');
+      throw const ServerException(
+        'Sesi masuk berakhir. Silakan login kembali.',
+      );
     }
 
     try {
@@ -51,13 +53,17 @@ class SupabaseServerStore {
       }
 
       final token = _generateToken();
-      final insertRes = await _client.from('servers').insert({
-        'name': name.trim(),
-        'token': token,
-        'color_index': colorIndex,
-        'icon_index': iconIndex,
-        'created_by': user.id,
-      }).select().single();
+      final insertRes = await _client
+          .from('servers')
+          .insert({
+            'name': name.trim(),
+            'token': token,
+            'color_index': colorIndex,
+            'icon_index': iconIndex,
+            'created_by': user.id,
+          })
+          .select()
+          .single();
 
       final serverId = insertRes['id'] as String;
 
@@ -88,7 +94,9 @@ class SupabaseServerStore {
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) {
-      throw const ServerException('Sesi masuk berakhir. Silakan login kembali.');
+      throw const ServerException(
+        'Sesi masuk berakhir. Silakan login kembali.',
+      );
     }
 
     final normalized = token.trim().toUpperCase();
@@ -281,7 +289,9 @@ class SupabaseServerStore {
       }
 
       if (memberRow['role'] == 'admin') {
-        throw const ServerException('Admin tidak bisa meninggalkan servernya sendiri.');
+        throw const ServerException(
+          'Admin tidak bisa meninggalkan servernya sendiri.',
+        );
       }
 
       await _client
@@ -355,7 +365,8 @@ class SupabaseServerStore {
           author: row['author_name'] as String? ?? 'User',
           isAdmin: row['is_admin'] as bool? ?? false,
           text: row['text'] as String? ?? '',
-          sentAt: DateTime.tryParse(row['sent_at'] as String? ?? '') ??
+          sentAt:
+              DateTime.tryParse(row['sent_at'] as String? ?? '') ??
               DateTime.now(),
         );
       }).toList();
@@ -374,14 +385,18 @@ class SupabaseServerStore {
     final now = DateTime.now();
 
     try {
-      final res = await _client.from('server_messages').insert({
-        'server_id': serverId,
-        'user_id': user?.id,
-        'author_name': author,
-        'is_admin': isAdmin,
-        'text': text.trim(),
-        'sent_at': now.toIso8601String(),
-      }).select().single();
+      final res = await _client
+          .from('server_messages')
+          .insert({
+            'server_id': serverId,
+            'user_id': user?.id,
+            'author_name': author,
+            'is_admin': isAdmin,
+            'text': text.trim(),
+            'sent_at': now.toIso8601String(),
+          })
+          .select()
+          .single();
 
       return ChatMessage(
         id: res['id'] as String,
