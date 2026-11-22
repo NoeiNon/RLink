@@ -85,7 +85,22 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _openRegister() {
+  Future<void> _openRegister() async {
+    // Kalau form sudah terisi, minta konfirmasi dulu sebelum pindah.
+    final hasInput =
+        _emailController.text.isNotEmpty || _passwordController.text.isNotEmpty;
+    if (hasInput) {
+      final ok = await showConfirmDialog(
+        context,
+        icon: Icons.swap_horiz_rounded,
+        color: AppColors.primary,
+        title: 'Pindah ke halaman Daftar?',
+        message: 'Data yang sudah kamu isi di halaman Masuk belum dikirim. Yakin ingin pindah?',
+        confirmLabel: 'Ya, pindah',
+        cancelLabel: 'Tetap di sini',
+      );
+      if (ok != true || !mounted) return;
+    }
     Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => const RegisterScreen()));
   }

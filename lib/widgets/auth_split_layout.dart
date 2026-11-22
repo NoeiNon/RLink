@@ -28,7 +28,6 @@ class AuthSplitLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = Navigator.of(context).canPop();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -61,16 +60,6 @@ class AuthSplitLayout extends StatelessWidget {
               ),
             ),
           ),
-          if (canPop)
-            const SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: EdgeInsets.all(4),
-                  child: BackButton(color: Colors.white),
-                ),
-              ),
-            ),
         ],
       ),
     );

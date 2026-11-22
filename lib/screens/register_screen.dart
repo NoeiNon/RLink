@@ -100,6 +100,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  Future<void> _goToLogin() async {
+    // Kalau form sudah terisi, minta konfirmasi dulu sebelum pindah.
+    final hasInput =
+        _emailController.text.isNotEmpty ||
+        _usernameController.text.isNotEmpty ||
+        _passwordController.text.isNotEmpty ||
+        _confirmController.text.isNotEmpty;
+    if (hasInput) {
+      final ok = await showConfirmDialog(
+        context,
+        icon: Icons.swap_horiz_rounded,
+        color: AppColors.primary,
+        title: 'Pindah ke halaman Masuk?',
+        message: 'Data pendaftaran yang sudah kamu isi belum disimpan. Yakin ingin pindah?',
+        confirmLabel: 'Ya, pindah',
+        cancelLabel: 'Tetap di sini',
+      );
+      if (ok != true || !mounted) return;
+    }
+    Navigator.of(context).pop();
+  }
+
   Widget _eyeButton() => IconButton(
     iconSize: 16,
     padding: EdgeInsets.zero,
@@ -123,7 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
           ),
           GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
+            onTap: _goToLogin,
             child: const Text(
               'Masuk',
               style: TextStyle(
