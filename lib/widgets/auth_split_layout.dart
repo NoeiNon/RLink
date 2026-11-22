@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../core/app_theme.dart';
@@ -98,6 +99,12 @@ class _Card extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Logo di dalam kartu: hanya untuk aplikasi Android/iOS
+          // (di web, panel WELCOME sudah menampilkan logo).
+          if (!wide && !kIsWeb) ...[
+            const Center(child: AppLogo(width: 64)),
+            const SizedBox(height: 16),
+          ],
           Text(
             title,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
