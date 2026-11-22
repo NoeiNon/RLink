@@ -113,8 +113,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthSplitLayout(
-      title: 'Buat akun',
-      subtitle: 'Setelah daftar, kamu bisa buat server atau gabung server',
+      title: 'Daftar ke RLink',
+      subtitle: 'Gabung untuk cari kerja, jualan, dan bangun tim.',
       footer: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
