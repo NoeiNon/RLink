@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 import '../core/app_theme.dart';
 import 'auth_layout.dart' show AppLogo, kFieldBorder, kErrorColor;
 
-/// Layout login/register ringkas: panel gambar di kiri (layar lebar),
-/// form kecil (maks 340px) di kanan. Di layar sempit hanya form.
+const _kBrandGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFF2A2250), Color(0xFF5865F2)],
+);
+
+/// Login/register: latar gradient layar penuh + kartu kecil di tengah.
+/// Kartu berisi panel WELCOME (kiri, hanya di layar lebar) dan form (kanan).
 class AuthSplitLayout extends StatelessWidget {
   final String title;
   final String? subtitle;
   final List<Widget> children;
-  final Widget? footer; // mis. "Belum punya akun? Daftar"
+  final Widget? footer;
 
   const AuthSplitLayout({
     super.key,
@@ -21,55 +27,157 @@ class AuthSplitLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: LayoutBuilder(
-        builder: (context, c) {
-          final wide = c.maxWidth >= 800;
-          final form = _FormPanel(
-            title: title,
-            subtitle: subtitle,
-            footer: footer,
-            children: children,
-          );
-          if (!wide) return form;
-          return Row(
-            children: [
-              const Expanded(flex: 5, child: _WelcomePanel()),
-              Expanded(flex: 4, child: form),
-            ],
-          );
-        },
+      body: Stack(
+        children: [
+          // Latar penuh = versi besar dari panel di dalam kartu.
+          const Positioned.fill(child: _WelcomeContent(big: true)),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, _) {
+                    final w = MediaQuery.of(context).size.width;
+                    final wide = w >= 720;
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: wide ? 720 : 380),
+                      child: _Card(
+                        wide: wide,
+                        title: title,
+                        subtitle: subtitle,
+                        footer: footer,
+                        children: children,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+          if (canPop)
+            const SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(4),
+                  child: BackButton(color: Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _WelcomePanel extends StatelessWidget {
-  const _WelcomePanel();
+class _Card extends StatelessWidget {
+  final bool wide;
+  final String title;
+  final String? subtitle;
+  final Widget? footer;
+  final List<Widget> children;
+  const _Card({
+    required this.wide,
+    required this.title,
+    required this.children,
+    this.subtitle,
+    this.footer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final form = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          ...children,
+          if (footer != null) ...[
+            const SizedBox(height: 16),
+            Center(child: footer!),
+          ],
+        ],
+      ),
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 32,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: ColoredBox(
+          color: AppColors.background,
+          child: wide
+              ? IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Expanded(
+                        flex: 5,
+                        child: _WelcomeContent(big: false),
+                      ),
+                      Expanded(flex: 5, child: Center(child: form)),
+                    ],
+                  ),
+                )
+              : form,
+        ),
+      ),
+    );
+  }
+}
+
+class _WelcomeContent extends StatelessWidget {
+  final bool big;
+  const _WelcomeContent({required this.big});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2A2250), Color(0xFF5865F2)],
-        ),
-      ),
-      child: const Center(
+      constraints: BoxConstraints(minHeight: big ? 0 : 400),
+      decoration: const BoxDecoration(gradient: _kBrandGradient),
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppLogo(width: 72),
-            SizedBox(height: 20),
+            AppLogo(width: big ? 72 : 56),
+            SizedBox(height: big ? 20 : 14),
             Text(
               'WELCOME',
               style: TextStyle(
-                fontSize: 34,
+                fontSize: big ? 34 : 24,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 4,
+                letterSpacing: big ? 4 : 3,
                 color: Colors.white,
               ),
             ),
@@ -80,68 +188,7 @@ class _WelcomePanel extends StatelessWidget {
   }
 }
 
-class _FormPanel extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget? footer;
-  final List<Widget> children;
-  const _FormPanel({
-    required this.title,
-    required this.children,
-    this.subtitle,
-    this.footer,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final canPop = Navigator.of(context).canPop();
-    return SafeArea(
-      child: Stack(
-        children: [
-          if (canPop) const Positioned(top: 4, left: 4, child: BackButton()),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 340),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    ...children,
-                    if (footer != null) ...[
-                      const SizedBox(height: 16),
-                      Center(child: footer!),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Field kecil bergaya underline (seperti referensi).
+/// Field kecil bergaya underline.
 InputDecoration compactInputDecoration({
   required String label,
   String? helper,

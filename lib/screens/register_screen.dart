@@ -166,8 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 decoration:
                     compactInputDecoration(
                       label: 'Username',
-                      helper:
-                          'Bebas: nama Minecraft atau nama buatanmu sendiri',
+                      helper: 'Buat Username unikmu.',
                       icon: Icons.person_outline_rounded,
                     ).copyWith(
                       errorText: _usernameError,
