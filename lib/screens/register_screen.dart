@@ -6,7 +6,7 @@ import '../core/validators.dart';
 import '../data/mock_auth_store.dart';
 import '../data/mock_server_store.dart' show ServerException;
 import '../widgets/app_feedback.dart';
-import '../widgets/auth_layout.dart';
+import '../widgets/auth_split_layout.dart';
 import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -72,9 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // Hapus halaman Daftar dan Login dari riwayat, jadi tombol kembali
     // tidak membawa pengguna ke halaman login lagi.
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => HomeScreen(username: uname),
-      ),
+      MaterialPageRoute<void>(builder: (_) => HomeScreen(username: uname)),
       (route) => false,
     );
   }
@@ -102,11 +100,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  Widget _eyeButton() => IconButton(
+    iconSize: 16,
+    padding: EdgeInsets.zero,
+    tooltip: _obscure ? 'Tampilkan password' : 'Sembunyikan',
+    icon: Icon(
+      _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+    ),
+    onPressed: () => setState(() => _obscure = !_obscure),
+  );
+
   @override
   Widget build(BuildContext context) {
-    return AuthLayout(
+    return AuthSplitLayout(
       title: 'Buat akun',
       subtitle: 'Setelah daftar, kamu bisa buat server atau gabung server',
+      footer: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Sudah punya akun? ',
+            style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Masuk',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.accent,
+              ),
+            ),
+          ),
+        ],
+      ),
       children: [
         Form(
           key: _formKey,
@@ -116,61 +144,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
+                style: const TextStyle(fontSize: 13.5),
                 onChanged: (_) => _clearErrors(),
-                decoration: appInputDecoration(
-                  label: 'Email',
-                  icon: Icons.mail_outline_rounded,
-                ).copyWith(
-                  errorText: _emailError,
-                  errorStyle: kFieldErrorStyle,
-                  errorMaxLines: 2,
-                ),
+                decoration:
+                    compactInputDecoration(
+                      label: 'Email',
+                      icon: Icons.mail_outline_rounded,
+                    ).copyWith(
+                      errorText: _emailError,
+                      errorStyle: kFieldErrorStyle,
+                      errorMaxLines: 2,
+                    ),
                 validator: Validators.email,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _usernameController,
                 textInputAction: TextInputAction.next,
+                style: const TextStyle(fontSize: 13.5),
                 onChanged: (_) => _clearErrors(),
-                decoration: appInputDecoration(
-                  label: 'Username',
-                  helper: 'Bebas: nama Minecraft atau nama buatanmu sendiri',
-                  icon: Icons.person_outline_rounded,
-                ).copyWith(
-                  errorText: _usernameError,
-                  errorStyle: kFieldErrorStyle,
-                  errorMaxLines: 2,
-                ),
+                decoration:
+                    compactInputDecoration(
+                      label: 'Username',
+                      helper:
+                          'Bebas: nama Minecraft atau nama buatanmu sendiri',
+                      icon: Icons.person_outline_rounded,
+                    ).copyWith(
+                      errorText: _usernameError,
+                      errorStyle: kFieldErrorStyle,
+                      errorMaxLines: 2,
+                    ),
                 validator: Validators.username,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscure,
                 textInputAction: TextInputAction.next,
-                decoration: appInputDecoration(
+                style: const TextStyle(fontSize: 13.5),
+                decoration: compactInputDecoration(
                   label: 'Password',
                   helper: 'Minimal 6 karakter',
                   icon: Icons.lock_outline_rounded,
-                  suffix: IconButton(
-                    tooltip: _obscure ? 'Tampilkan password' : 'Sembunyikan',
-                    icon: Icon(
-                      _obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
+                  suffix: _eyeButton(),
                 ),
                 validator: Validators.newPassword,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _confirmController,
                 obscureText: _obscure,
                 textInputAction: TextInputAction.done,
+                style: const TextStyle(fontSize: 13.5),
                 onFieldSubmitted: (_) => _submit(),
-                decoration: appInputDecoration(
+                decoration: compactInputDecoration(
                   label: 'Ulangi password',
                   icon: Icons.lock_outline_rounded,
                 ),
@@ -181,26 +208,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         if (_generalError != null) ...[
           InlineError(_generalError!),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
         ],
-        PrimaryButton(label: 'Daftar', loading: _loading, onPressed: _submit),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Sudah punya akun?',
-              style: TextStyle(color: AppColors.textMuted),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Masuk'),
-            ),
-          ],
-        ),
+        CompactButton(label: 'Daftar', loading: _loading, onPressed: _submit),
       ],
     );
   }
