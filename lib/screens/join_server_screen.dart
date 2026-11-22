@@ -110,7 +110,7 @@ class _JoinServerScreenState extends State<JoinServerScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Minta token ke admin servermu, lalu tempel di bawah. '
+            'Minta token ke boss servermu, lalu tempel di bawah. '
             'Kamu akan bergabung sebagai Builder.',
             textAlign: TextAlign.center,
             style: TextStyle(

@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                     iconBackground: const Color(0x335865F2),
                     title: 'Buat server',
                     description:
-                        'Mulai server sendiri. Kamu jadi admin dan dapat '
+                        'Mulai server sendiri. Kamu jadi boss dan dapat '
                         'token untuk mengundang builder.',
                     onTap: () => _openCreateServer(context),
                   ),
@@ -98,7 +98,7 @@ class HomeScreen extends StatelessWidget {
                     iconBackground: const Color(0x33B69CFF),
                     title: 'Gabung server',
                     description:
-                        'Punya token dari admin? Masukkan di sini untuk '
+                        'Punya token dari boss? Masukkan di sini untuk '
                         'bergabung sebagai builder.',
                     onTap: () => _openJoinServer(context),
                   ),

@@ -172,8 +172,9 @@ class _MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        message.author.isEmpty ? '?' : message.author[0].toUpperCase();
+    final initial = message.author.isEmpty
+        ? '?'
+        : message.author[0].toUpperCase();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -254,7 +255,7 @@ class _MiniBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        isAdmin ? 'Admin' : 'Builder',
+        isAdmin ? 'Boss' : 'Builder',
         style: TextStyle(
           color: isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C),
           fontSize: 10,
@@ -405,7 +406,8 @@ class _SummaryPanelState extends State<_SummaryPanel> {
   /// statistik berjajar, lalu aktivitas di bawahnya.
   Widget _adminPanel(List<_Stat> stats, bool keyboardOpen) {
     final showDetails = _expanded && !keyboardOpen;
-    final summary = '${stats[0].value} tersedia · '
+    final summary =
+        '${stats[0].value} tersedia · '
         '${stats[1].value} dikerjakan · '
         '${stats[2].value} perlu review';
 
@@ -502,7 +504,9 @@ class _SummaryPanelState extends State<_SummaryPanel> {
                       children: [
                         for (var i = 0; i < stats.length; i++) ...[
                           if (i > 0) const SizedBox(height: 8),
-                          Expanded(child: _StatTile(stat: stats[i], dense: true)),
+                          Expanded(
+                            child: _StatTile(stat: stats[i], dense: true),
+                          ),
                         ],
                       ],
                     ),
@@ -607,20 +611,23 @@ class _ActivityCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text.rich(
-                        TextSpan(children: [
-                          TextSpan(
-                            text: item.who,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w700,
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: item.who,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: ' ${item.what}',
-                            style:
-                                const TextStyle(color: AppColors.textMuted),
-                          ),
-                        ]),
+                            TextSpan(
+                              text: ' ${item.what}',
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 12),
@@ -679,8 +686,10 @@ class _InputBar extends StatelessWidget {
                 hintText: 'Tulis pesan...',
                 filled: true,
                 fillColor: AppColors.surface,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,

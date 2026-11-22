@@ -124,7 +124,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       title: 'Gaji',
       description:
           'Saldo dan riwayat gaji dari project yang sudah '
-          'disetujui admin.',
+          'disetujui boss.',
       icon: Icons.payments_outlined,
       selectedIcon: Icons.payments_rounded,
     ),
@@ -145,7 +145,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
       title: 'Tinggalkan server?',
       message:
           'Kamu akan keluar dari ${widget.server.name}. Kamu bisa '
-          'bergabung lagi nanti dengan token dari admin.',
+          'bergabung lagi nanti dengan token dari boss.',
       confirmLabel: 'Tinggalkan',
     );
     if (confirmed != true || !mounted) return;
@@ -352,7 +352,7 @@ class _RoleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        isAdmin ? 'Admin' : 'Builder',
+        isAdmin ? 'Boss' : 'Builder',
         style: TextStyle(
           color: foreground,
           fontSize: 12,

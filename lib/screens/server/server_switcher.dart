@@ -68,10 +68,10 @@ class ServerSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final created =
-        memberships.where((m) => m.role == ServerRole.admin).length;
-    final joined =
-        memberships.where((m) => m.role == ServerRole.builder).length;
+    final created = memberships.where((m) => m.role == ServerRole.admin).length;
+    final joined = memberships
+        .where((m) => m.role == ServerRole.builder)
+        .length;
     final canCreate = created < MockServerStore.maxCreated;
     final canJoin = joined < MockServerStore.maxJoined;
 
@@ -202,7 +202,7 @@ class _ServerRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          isAdmin ? 'Admin' : 'Builder',
+          isAdmin ? 'Boss' : 'Builder',
           style: TextStyle(
             color: isAdmin ? const Color(0xFFB5BCFF) : const Color(0xFF6FD08C),
             fontSize: 11,

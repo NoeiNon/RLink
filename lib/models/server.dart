@@ -1,6 +1,11 @@
 /// Peran seseorang di satu server. Peran melekat ke server, bukan ke akun:
-/// pembuat server jadi admin di servernya sendiri, dan jadi builder kalau
+/// pembuat server jadi "boss" di servernya sendiri, dan jadi builder kalau
 /// bergabung di server orang lain.
+///
+/// Catatan: nilai `admin` di sini adalah boss komunitas. Nama enum dan nilai
+/// di database sengaja tidak diubah supaya data lama dan aturan keamanan tetap
+/// jalan. Tampilannya ditulis "Boss". Istilah "admin" sekarang khusus untuk
+/// admin aplikasi (pemilik RLink), yang akan punya peran sendiri nanti.
 enum ServerRole { admin, builder }
 
 /// Data satu server.

@@ -185,8 +185,8 @@ class _SopScreenState extends State<SopScreen> {
                 Text(
                   widget.isAdmin
                       ? 'Belum ada SOP. Tekan ikon pensil di kanan atas '
-                          'untuk mulai menulis.'
-                      : 'Admin belum menulis SOP.',
+                            'untuk mulai menulis.'
+                      : 'Boss belum menulis SOP.',
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     height: 1.5,

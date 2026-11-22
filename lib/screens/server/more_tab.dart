@@ -44,7 +44,7 @@ class MoreTab extends StatelessWidget {
       description: _isAdmin
           ? 'Setujui atau tolak pengajuan libur dari builder. '
                 'Builder yang libur tidak bisa claim project dan tidak digaji.'
-          : 'Ajukan libur kalau sedang sibuk. Kalau disetujui admin, '
+          : 'Ajukan libur kalau sedang sibuk. Kalau disetujui boss, '
                 'statusmu jadi libur.',
     ),
     const _MenuItem(

@@ -60,11 +60,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
   }
 
-  Future<void> _claim() => _run(() => MockProjectStore.claim(
-        serverId: widget.serverId,
-        projectId: _project.id,
-        username: widget.username,
-      ));
+  Future<void> _claim() => _run(
+    () => MockProjectStore.claim(
+      serverId: widget.serverId,
+      projectId: _project.id,
+      username: widget.username,
+    ),
+  );
 
   Future<void> _attach() async {
     final picked = await pickBlueprints(context, already: _photos.length);
@@ -78,13 +80,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final photos = List<Blueprint>.of(_photos);
     _input.clear();
     setState(_photos.clear);
-    await _run(() => MockProjectStore.addUpdate(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          author: widget.username,
-          text: text,
-          photos: photos,
-        ));
+    await _run(
+      () => MockProjectStore.addUpdate(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        author: widget.username,
+        text: text,
+        photos: photos,
+      ),
+    );
   }
 
   Future<void> _addBlueprints() async {
@@ -93,20 +97,22 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       already: _project.blueprints.length,
     );
     if (picked.isEmpty) return;
-    await _run(() => MockProjectStore.addBlueprints(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          items: picked,
-        ));
+    await _run(
+      () => MockProjectStore.addBlueprints(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        items: picked,
+      ),
+    );
   }
 
   Future<void> _removeBlueprint(int index) => _run(
-        () => MockProjectStore.removeBlueprint(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          index: index,
-        ),
-      );
+    () => MockProjectStore.removeBlueprint(
+      serverId: widget.serverId,
+      projectId: _project.id,
+      index: index,
+    ),
+  );
 
   Future<void> _editTags() async {
     var tags = List<String>.of(_project.tags);
@@ -115,16 +121,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       icon: Icons.sell_outlined,
       color: AppColors.accent,
       title: 'Atur tag',
-      message: 'Tag membantu admin dan builder menyaring project.',
+      message: 'Tag membantu boss dan builder menyaring project.',
       confirmLabel: 'Simpan',
       body: TagEditor(tags: tags, onChanged: (v) => tags = v),
     );
     if (ok != true) return;
-    await _run(() => MockProjectStore.setTags(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          tags: tags,
-        ));
+    await _run(
+      () => MockProjectStore.setTags(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        tags: tags,
+      ),
+    );
   }
 
   Future<void> _accept() async {
@@ -133,15 +141,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       icon: Icons.check_circle_outline_rounded,
       color: kSuccessColor,
       title: 'Terima hasil kerja?',
-      message: 'Project akan ditandai Finished dan tidak bisa dikerjakan '
+      message:
+          'Project akan ditandai Finished dan tidak bisa dikerjakan '
           'lagi oleh builder.',
       confirmLabel: 'Accept',
     );
     if (ok != true) return;
-    await _run(() => MockProjectStore.accept(
-          serverId: widget.serverId,
-          projectId: _project.id,
-        ));
+    await _run(
+      () => MockProjectStore.accept(
+        serverId: widget.serverId,
+        projectId: _project.id,
+      ),
+    );
   }
 
   Future<void> _decline() async {
@@ -151,7 +162,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       icon: Icons.highlight_off_rounded,
       color: kErrorColor,
       title: 'Tolak hasil kerja?',
-      message: 'Project kembali ke On Progress supaya builder bisa '
+      message:
+          'Project kembali ke On Progress supaya builder bisa '
           'memperbaikinya. Tulis revisi yang diminta (opsional).',
       confirmLabel: 'Decline',
       body: TextField(
@@ -166,12 +178,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final text = reason.text;
     reason.dispose();
     if (ok != true) return;
-    await _run(() => MockProjectStore.decline(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          reviewer: widget.username,
-          reason: text,
-        ));
+    await _run(
+      () => MockProjectStore.decline(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        reviewer: widget.username,
+        reason: text,
+      ),
+    );
   }
 
   Future<void> _markDone() async {
@@ -180,47 +194,52 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       icon: Icons.task_alt_rounded,
       color: kSuccessColor,
       title: 'Tandai selesai?',
-      message: 'Project dikirim ke admin untuk diperiksa. Kamu tidak bisa '
+      message:
+          'Project dikirim ke boss untuk diperiksa. Kamu tidak bisa '
           'mengirim update lagi sampai ada keputusan.',
       confirmLabel: 'Ya, selesai',
     );
     if (ok != true) return;
-    await _run(() => MockProjectStore.markDone(
-          serverId: widget.serverId,
-          projectId: _project.id,
-          username: widget.username,
-        ));
+    await _run(
+      () => MockProjectStore.markDone(
+        serverId: widget.serverId,
+        projectId: _project.id,
+        username: widget.username,
+      ),
+    );
   }
 
   Widget _card(String title, Widget child) => Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kFieldBorder),
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: kFieldBorder),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            child,
-          ],
-        ),
-      );
+        const SizedBox(height: 8),
+        child,
+      ],
+    ),
+  );
 
   Widget _line(String label, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Text.rich(TextSpan(children: [
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Text.rich(
+      TextSpan(
+        children: [
           TextSpan(
             text: '$label: ',
             style: const TextStyle(color: AppColors.textMuted),
@@ -229,15 +248,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             text: value,
             style: const TextStyle(color: AppColors.textPrimary),
           ),
-        ])),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget _actions() {
     final p = _project;
     Widget note(String text) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Text(text, style: const TextStyle(color: AppColors.textMuted)),
-        );
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(text, style: const TextStyle(color: AppColors.textMuted)),
+    );
 
     if (_isAdmin) {
       return Padding(
@@ -245,8 +266,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         child: Column(
           children: [
             if (p.status == ProjectStatus.review) ...[
-              note('Builder menandai project ini selesai. '
-                  'Periksa progress, lalu putuskan.'),
+              note(
+                'Builder menandai project ini selesai. '
+                'Periksa progress, lalu putuskan.',
+              ),
               Row(
                 children: [
                   Expanded(
@@ -292,14 +315,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       );
     }
     if (_isWorker && p.status == ProjectStatus.review) {
-      return note('Menunggu admin memeriksa pekerjaanmu.');
+      return note('Menunggu boss memeriksa pekerjaanmu.');
     }
     if (p.status == ProjectStatus.finished) {
       return note('Project ini sudah selesai.');
     }
     if (_isWorker) return const SizedBox.shrink();
     if (p.status == ProjectStatus.review) {
-      return note('Project ini sedang direview admin.');
+      return note('Project ini sedang direview boss.');
     }
     if (p.isFull) return note('Slot worker sudah penuh.');
     return Padding(
@@ -367,9 +390,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _composer() {
-    final canPost = _isBuilder &&
-        _isWorker &&
-        _project.status == ProjectStatus.onProgress;
+    final canPost =
+        _isBuilder && _isWorker && _project.status == ProjectStatus.onProgress;
     if (!canPost) return const SizedBox.shrink();
     return SafeArea(
       top: false,
@@ -423,80 +445,82 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   Widget build(BuildContext context) {
     final p = _project;
     final info = <Widget>[
-                Text(
-                  p.title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
+      Text(
+        p.title,
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          LabelChip(label: p.status.label, color: statusColor(p.status)),
+          for (final t in p.displayTags)
+            LabelChip(label: t, color: tagColor(t)),
+        ],
+      ),
+      const SizedBox(height: 14),
+      _card(
+        'INFO',
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _line('Dari', p.from),
+            _line('Payment', p.paymentLabel),
+            _line('Deadline', formatDate(p.deadline)),
+            _line('Worker', '${p.workers.length}/${p.maxWorkers}'),
+          ],
+        ),
+      ),
+      _card(
+        'DETAIL',
+        Text(p.detail, style: const TextStyle(color: AppColors.textPrimary)),
+      ),
+      if (p.blueprints.isNotEmpty || _isAdmin)
+        _card(
+          'BLUEPRINT (${p.blueprints.length})',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (p.blueprints.isEmpty)
+                const Text(
+                  'Belum ada blueprint.',
+                  style: TextStyle(color: AppColors.textMuted),
+                )
+              else
+                BlueprintGallery(
+                  items: p.blueprints,
+                  onRemove: _isAdmin ? _removeBlueprint : null,
                 ),
-                const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6, children: [
-                  LabelChip(
-                    label: p.status.label,
-                    color: statusColor(p.status),
+              if (_isAdmin)
+                TextButton.icon(
+                  onPressed: _busy ? null : _addBlueprints,
+                  icon: const Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 18,
                   ),
-                  for (final t in p.displayTags)
-                    LabelChip(label: t, color: tagColor(t)),
-                ]),
-                const SizedBox(height: 14),
-                _card(
-                  'INFO',
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _line('Dari', p.from),
-                      _line('Payment', p.paymentLabel),
-                      _line('Deadline', formatDate(p.deadline)),
-                      _line('Worker', '${p.workers.length}/${p.maxWorkers}'),
-                    ],
-                  ),
+                  label: const Text('Tambah gambar'),
                 ),
-                _card(
-                  'DETAIL',
-                  Text(
-                    p.detail,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-                ),
-                if (p.blueprints.isNotEmpty || _isAdmin)
-                  _card(
-                    'BLUEPRINT (${p.blueprints.length})',
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (p.blueprints.isEmpty)
-                          const Text(
-                            'Belum ada blueprint.',
-                            style: TextStyle(color: AppColors.textMuted),
-                          )
-                        else
-                          BlueprintGallery(
-                            items: p.blueprints,
-                            onRemove: _isAdmin ? _removeBlueprint : null,
-                          ),
-                        if (_isAdmin)
-                          TextButton.icon(
-                            onPressed: _busy ? null : _addBlueprints,
-                            icon: const Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 18,
-                            ),
-                            label: const Text('Tambah gambar'),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (p.workers.isNotEmpty)
-                  _card(
-                    'WORKER',
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      for (final w in p.workers)
-                        LabelChip(label: w, color: AppColors.primary),
-                    ]),
-                  ),
-                _actions(),
+            ],
+          ),
+        ),
+      if (p.workers.isNotEmpty)
+        _card(
+          'WORKER',
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final w in p.workers)
+                LabelChip(label: w, color: AppColors.primary),
+            ],
+          ),
+        ),
+      _actions(),
     ];
 
     return Scaffold(

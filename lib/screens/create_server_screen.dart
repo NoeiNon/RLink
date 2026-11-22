@@ -140,7 +140,7 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
           ),
           const SizedBox(height: 24),
           const _InfoNote(
-            'Kamu otomatis jadi admin di server ini. Token undangan dibuat '
+            'Kamu otomatis jadi boss di server ini. Token undangan dibuat '
             'otomatis dan bisa disalin dari halaman server.',
           ),
           if (_error != null) ...[
