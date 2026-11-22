@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AuthSplitLayout(
       title: 'Selamat datang',
-      subtitle: 'Masuk untuk mengelola project builder-mu',
+      subtitle: 'Masuk untuk cari kerja, jualan, dan bangun tim.',
       footer: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
