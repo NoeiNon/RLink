@@ -388,10 +388,6 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
                   memberships: _memberships,
                 ),
               ),
-              actions: [
-                _RoleBadge(isAdmin: _isAdmin),
-                const SizedBox(width: 12),
-              ],
             ),
             body: SafeArea(child: content),
             bottomNavigationBar: NavigationBar(
@@ -418,21 +414,11 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
             child: Row(
               children: [
                 _ServerSidebar(
-                  header: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ServerSwitcher(
-                        username: widget.username,
-                        current: widget.server,
-                        memberships: _memberships,
-                        fill: true,
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: _RoleBadge(isAdmin: _isAdmin),
-                      ),
-                    ],
+                  header: ServerSwitcher(
+                    username: widget.username,
+                    current: widget.server,
+                    memberships: _memberships,
+                    fill: true,
                   ),
                   destinations: _destinations,
                   selectedIndex: _index,
@@ -683,7 +669,10 @@ class _RailItem extends StatelessWidget {
             height: 38,
             child: Row(
               children: [
-                SizedBox(width: 38, child: Icon(icon, size: 20, color: color)),
+                SizedBox(
+                  width: 38,
+                  child: Icon(icon, size: 20, color: color),
+                ),
                 if (expanded)
                   Expanded(
                     child: Text(
@@ -785,39 +774,6 @@ class _SubChips extends StatelessWidget {
           visualDensity: VisualDensity.compact,
           labelStyle: const TextStyle(fontSize: 12),
           onSelected: (_) => onSelected(i),
-        ),
-      ),
-    );
-  }
-}
-
-/// Lencana peran di pojok kanan atas.
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.isAdmin});
-
-  final bool isAdmin;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isAdmin
-        ? const Color(0x335865F2)
-        : const Color(0x333BA55D);
-    final foreground = isAdmin
-        ? const Color(0xFFB5BCFF)
-        : const Color(0xFF6FD08C);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        isAdmin ? 'Boss' : 'Builder',
-        style: TextStyle(
-          color: foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
