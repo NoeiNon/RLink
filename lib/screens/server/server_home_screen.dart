@@ -291,106 +291,291 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     );
   }
 
+  void _backToDashboard() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      openStartScreen(context, widget.username);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Navigasi di samping penuh dari atas ke bawah; dropdown server dan
-    // lencana peran berada di sebelah kanan navigasi.
-    return Scaffold(
-      body: SafeArea(
-        child: Row(
-          children: [
-            _SideNav(
-              destinations: _destinations,
-              selectedIndex: _index,
-              onSelected: (value) => setState(() => _index = value),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final wide = box.maxWidth >= 760;
+        final content = _CompactScope(child: _buildPage());
+
+        // HP: navigasi bawah, dropdown server dan lencana peran di atas.
+        if (!wide) {
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: AppColors.surface,
+              scrolledUnderElevation: 0,
+              toolbarHeight: 52,
+              leading: IconButton(
+                tooltip: 'Kembali ke beranda',
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: _backToDashboard,
+              ),
+              titleSpacing: 0,
+              centerTitle: false,
+              title: Align(
+                alignment: Alignment.centerLeft,
+                child: ServerSwitcher(
+                  username: widget.username,
+                  current: widget.server,
+                  memberships: _memberships,
+                ),
+              ),
+              actions: [
+                _RoleBadge(isAdmin: _isAdmin),
+                const SizedBox(width: 12),
+              ],
             ),
-            Expanded(
-              child: Column(
-                children: [
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    scrolledUnderElevation: 0,
-                    titleSpacing: 16,
-                    centerTitle: false,
-                    title: Align(
-                      alignment: Alignment.centerLeft,
-                      child: ServerSwitcher(
-                        username: widget.username,
-                        current: widget.server,
-                        memberships: _memberships,
+            body: SafeArea(child: content),
+            bottomNavigationBar: NavigationBar(
+              backgroundColor: AppColors.surface,
+              height: 62,
+              selectedIndex: _index,
+              onDestinationSelected: (value) => setState(() => _index = value),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: [
+                for (final d in _destinations)
+                  NavigationDestination(
+                    icon: Icon(d.icon),
+                    selectedIcon: Icon(d.selectedIcon),
+                    label: d.label,
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // Layar lebar: sidebar kiri bergaya sama seperti beranda utama.
+        return Scaffold(
+          body: SafeArea(
+            child: Row(
+              children: [
+                _ServerSidebar(
+                  destinations: _destinations,
+                  selectedIndex: _index,
+                  onSelected: (value) => setState(() => _index = value),
+                  onBack: _backToDashboard,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      AppBar(
+                        backgroundColor: Colors.transparent,
+                        scrolledUnderElevation: 0,
+                        toolbarHeight: 52,
+                        titleSpacing: 16,
+                        centerTitle: false,
+                        title: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ServerSwitcher(
+                            username: widget.username,
+                            current: widget.server,
+                            memberships: _memberships,
+                          ),
+                        ),
+                        actions: [
+                          _RoleBadge(isAdmin: _isAdmin),
+                          const SizedBox(width: 16),
+                        ],
                       ),
-                    ),
-                    actions: [
-                      _RoleBadge(isAdmin: _isAdmin),
-                      const SizedBox(width: 16),
+                      Expanded(child: content),
                     ],
                   ),
-                  Expanded(child: _buildPage()),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Memadatkan isi tab server: teks sedikit lebih kecil, kepadatan komponen
+/// rapat, tombol dan kolom isian lebih pendek.
+class _CompactScope extends StatelessWidget {
+  const _CompactScope({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final base = Theme.of(context);
+    // Hormati ukuran teks sistem (aksesibilitas), lalu kecilkan sedikit.
+    final factor = media.textScaler.scale(14) / 14 * 0.92;
+
+    ButtonStyle compact(ButtonStyle? style) =>
+        (style ?? const ButtonStyle()).copyWith(
+          minimumSize: const WidgetStatePropertyAll(Size(0, 38)),
+          textStyle: const WidgetStatePropertyAll(
+            TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        );
+
+    return MediaQuery(
+      data: media.copyWith(textScaler: TextScaler.linear(factor)),
+      child: Theme(
+        data: base.copyWith(
+          visualDensity: VisualDensity.compact,
+          inputDecorationTheme: base.inputDecorationTheme.copyWith(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: compact(base.filledButtonTheme.style),
+          ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: compact(base.outlinedButtonTheme.style),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: compact(base.textButtonTheme.style),
+          ),
+          listTileTheme: base.listTileTheme.copyWith(dense: true),
         ),
+        child: child,
       ),
     );
   }
 }
 
-/// Navigasi samping untuk semua tab (admin dan builder).
-class _SideNav extends StatelessWidget {
-  const _SideNav({
+/// Sidebar kiri layar server: tombol kembali ke beranda dan tab server.
+class _ServerSidebar extends StatelessWidget {
+  const _ServerSidebar({
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
+    required this.onBack,
   });
 
   final List<_Destination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 200,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(right: BorderSide(color: Color(0xFF2E2942))),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: NavigationRail(
-                minWidth: 60,
-                selectedIndex: selectedIndex,
-                backgroundColor: Colors.transparent,
-                indicatorColor: const Color(0x335865F2),
-                labelType: NavigationRailLabelType.all,
-                selectedLabelTextStyle: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-                unselectedLabelTextStyle: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textMuted,
-                ),
-                onDestinationSelected: onSelected,
-                destinations: [
-                  for (final d in destinations)
-                    NavigationRailDestination(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: Text(
-                        d.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: onBack,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.arrow_back_rounded,
+                      size: 18,
+                      color: AppColors.textMuted,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Beranda',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 10, 20, 6),
+            child: Text(
+              'SERVER',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                for (var i = 0; i < destinations.length; i++)
+                  _ServerNavItem(
+                    destination: destinations[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onSelected(i),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServerNavItem extends StatelessWidget {
+  const _ServerNavItem({
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _Destination destination;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.textPrimary : AppColors.textMuted;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: selected ? const Color(0x335865F2) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  selected ? destination.selectedIcon : destination.icon,
+                  size: 18,
+                  color: selected ? AppColors.accent : color,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    destination.label,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
