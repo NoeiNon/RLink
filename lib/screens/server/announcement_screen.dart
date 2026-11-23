@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
 import '../../data/mock_announcement_store.dart';
+import '../../data/mock_server_store.dart' show ServerException;
 import '../../models/server.dart';
 import '../../widgets/app_feedback.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
@@ -33,29 +36,64 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
   final _title = TextEditingController();
   final _text = TextEditingController();
   bool _composing = false;
+  bool _posting = false;
+  bool _loading = true;
+  List<Announcement> _items = const [];
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    // Muat ulang berkala supaya pengumuman baru dari boss muncul di member.
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _load());
+  }
+
+  Future<void> _load() async {
+    final items = await MockAnnouncementStore.list(widget.server.id);
+    if (!mounted) return;
+    setState(() {
+      _items = items;
+      _loading = false;
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _title.dispose();
     _text.dispose();
     super.dispose();
   }
 
-  void _post() {
+  Future<void> _post() async {
     if (_title.text.trim().isEmpty || _text.text.trim().isEmpty) {
       showToast(context, 'Judul dan isi pengumuman wajib diisi.');
       return;
     }
-    MockAnnouncementStore.post(
-      serverId: widget.server.id,
-      title: _title.text,
-      text: _text.text,
-      author: widget.username,
-    );
+    setState(() => _posting = true);
+    try {
+      await MockAnnouncementStore.post(
+        serverId: widget.server.id,
+        title: _title.text,
+        text: _text.text,
+        author: widget.username,
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      setState(() => _posting = false);
+      showToast(context, e.message);
+      return;
+    }
+    if (!mounted) return;
     _title.clear();
     _text.clear();
-    setState(() => _composing = false);
+    setState(() {
+      _composing = false;
+      _posting = false;
+    });
     showToast(context, 'Pengumuman diposting', error: false);
+    await _load();
   }
 
   Future<void> _delete(Announcement a) async {
@@ -68,7 +106,13 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
       confirmLabel: 'Hapus',
     );
     if (ok != true || !mounted) return;
-    setState(() => MockAnnouncementStore.delete(widget.server.id, a.id));
+    try {
+      await MockAnnouncementStore.delete(widget.server.id, a.id);
+    } on ServerException catch (e) {
+      if (mounted) showToast(context, e.message);
+      return;
+    }
+    await _load();
   }
 
   Widget _composer() {
@@ -104,7 +148,10 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
                 child: const Text('Batal'),
               ),
               const SizedBox(width: 6),
-              FilledButton(onPressed: _post, child: const Text('Posting')),
+              FilledButton(
+                onPressed: _posting ? null : _post,
+                child: const Text('Posting'),
+              ),
             ],
           ),
         ],
@@ -174,7 +221,8 @@ class _AnnouncementScreenState extends State<AnnouncementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final items = MockAnnouncementStore.list(widget.server.id);
+    final items = _items;
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
     return Align(
       alignment: Alignment.topCenter,
