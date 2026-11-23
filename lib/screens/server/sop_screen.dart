@@ -17,10 +17,18 @@ String _formatDateTime(DateTime time) {
 /// Admin bisa mengedit dan menyimpan langsung. Builder hanya membaca
 /// (seperti catatan patch note), tanpa tombol edit.
 class SopScreen extends StatefulWidget {
-  const SopScreen({super.key, required this.server, required this.isAdmin});
+  const SopScreen({
+    super.key,
+    required this.server,
+    required this.isAdmin,
+    this.embedded = false,
+  });
 
   final ServerInfo server;
   final bool isAdmin;
+
+  /// true = dipakai di dalam halaman server (tanpa Scaffold/AppBar sendiri).
+  final bool embedded;
 
   @override
   State<SopScreen> createState() => _SopScreenState();
@@ -210,6 +218,31 @@ class _SopScreenState extends State<SopScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'SOP',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                ..._buildActions(),
+              ],
+            ),
+          ),
+          Expanded(child: _buildBody()),
+        ],
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,

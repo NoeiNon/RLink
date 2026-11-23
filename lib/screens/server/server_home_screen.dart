@@ -5,6 +5,7 @@ import '../../models/server.dart';
 import '../../widgets/app_feedback.dart';
 import '../../data/mock_server_store.dart';
 import '../app_router.dart';
+import 'announcement_screen.dart';
 import 'more_tab.dart';
 import 'members_sidebar.dart';
 import 'overview_tab.dart';
@@ -12,9 +13,19 @@ import 'placeholder_tab.dart';
 import 'payroll_tab.dart';
 import 'projects_tab.dart';
 import 'server_switcher.dart';
+import 'sop_screen.dart';
+
+/// Menu kecil di panel kedua (sidebar kanan-dalam) milik satu bagian.
+class _Sub {
+  const _Sub(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
 
 class _Destination {
   const _Destination({
+    this.subs = const [],
     required this.label,
     required this.title,
     required this.description,
@@ -22,6 +33,7 @@ class _Destination {
     required this.selectedIcon,
   });
 
+  final List<_Sub> subs;
   final String label;
   final String title;
   final String description;
@@ -50,6 +62,7 @@ class ServerHomeScreen extends StatefulWidget {
 
 class _ServerHomeScreenState extends State<ServerHomeScreen> {
   int _index = 0;
+  int _sub = 0;
   List<ServerMembership> _memberships = const [];
 
   bool get _isAdmin => widget.role == ServerRole.admin;
@@ -70,6 +83,11 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
   }
 
   static const _beranda = _Destination(
+    subs: [
+      _Sub('Announcement', Icons.campaign_outlined),
+      _Sub('SOP', Icons.article_outlined),
+      _Sub('Discussion', Icons.forum_outlined),
+    ],
     label: 'Overview',
     title: 'Overview',
     description: '',
@@ -133,6 +151,17 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
 
   List<_Destination> get _destinations =>
       _isAdmin ? _adminDestinations : _builderDestinations;
+
+  /// Menu panel kedua. Bagian tanpa daftar sendiri cukup satu menu.
+  List<_Sub> get _subs {
+    final d = _destinations[_index];
+    return d.subs.isEmpty ? [_Sub(d.label, d.icon)] : d.subs;
+  }
+
+  void _selectSection(int value) => setState(() {
+    _index = value;
+    _sub = 0;
+  });
 
   /// Tinggalkan server (khusus builder): keanggotaan dihapus dan kuota
   /// gabung bertambah. Setelah itu pindah ke server lain, atau ke halaman
@@ -236,6 +265,22 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
 
   Widget _buildPage() {
     if (_index == 0) {
+      if (_sub == 0) {
+        return AnnouncementScreen(
+          key: ValueKey('ann-${widget.server.id}'),
+          server: widget.server,
+          username: widget.username,
+          isAdmin: _isAdmin,
+        );
+      }
+      if (_sub == 1) {
+        return SopScreen(
+          key: ValueKey('sop-${widget.server.id}'),
+          server: widget.server,
+          isAdmin: _isAdmin,
+          embedded: true,
+        );
+      }
       final overview = OverviewTab(
         username: widget.username,
         server: widget.server,
@@ -279,7 +324,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
         server: widget.server,
         username: widget.username,
         role: widget.role,
-        onOpenProjects: () => setState(() => _index = 1),
+        onOpenProjects: () => _selectSection(1),
       );
     }
     return PlaceholderTab(
@@ -304,7 +349,22 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
     return LayoutBuilder(
       builder: (context, box) {
         final wide = box.maxWidth >= 760;
-        final content = _CompactScope(child: _buildPage());
+        final subs = _subs;
+        final page = _buildPage();
+        final content = _CompactScope(
+          child: wide || subs.length < 2
+              ? page
+              : Column(
+                  children: [
+                    _SubChips(
+                      subs: subs,
+                      selected: _sub,
+                      onSelected: (v) => setState(() => _sub = v),
+                    ),
+                    Expanded(child: page),
+                  ],
+                ),
+        );
 
         // HP: navigasi bawah, dropdown server dan lencana peran di atas.
         if (!wide) {
@@ -338,7 +398,7 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
               backgroundColor: AppColors.surface,
               height: 62,
               selectedIndex: _index,
-              onDestinationSelected: (value) => setState(() => _index = value),
+              onDestinationSelected: _selectSection,
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: [
                 for (final d in _destinations)
@@ -376,7 +436,10 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
                   ),
                   destinations: _destinations,
                   selectedIndex: _index,
-                  onSelected: (value) => setState(() => _index = value),
+                  onSelected: _selectSection,
+                  subs: _subs,
+                  selectedSub: _sub,
+                  onSelectedSub: (v) => setState(() => _sub = v),
                   onBack: _backToDashboard,
                 ),
                 Expanded(child: content),
@@ -440,13 +503,17 @@ class _CompactScope extends StatelessWidget {
   }
 }
 
-/// Sidebar kiri layar server: tombol kembali ke beranda dan tab server.
+/// Sidebar dua tingkat seperti Supabase: rel ikon di kiri (bagian server),
+/// lalu panel kedua berisi menu milik bagian yang dipilih.
 class _ServerSidebar extends StatelessWidget {
   const _ServerSidebar({
     required this.header,
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
+    required this.subs,
+    required this.selectedSub,
+    required this.onSelectedSub,
     required this.onBack,
   });
 
@@ -454,85 +521,98 @@ class _ServerSidebar extends StatelessWidget {
   final List<_Destination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final List<_Sub> subs;
+  final int selectedSub;
+  final ValueChanged<int> onSelectedSub;
   final VoidCallback onBack;
+
+  static const _border = BorderSide(color: Color(0xFF2E2942));
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(right: BorderSide(color: Color(0xFF2E2942))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Ganti server di paling atas, seperti Discord.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
-            child: header,
+    return Row(
+      children: [
+        // Rel ikon.
+        Container(
+          width: 56,
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(right: _border),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: onBack,
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-                child: Row(
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              IconButton(
+                tooltip: 'Kembali ke beranda',
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 20,
+                  color: AppColors.textMuted,
+                ),
+                onPressed: onBack,
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Divider(height: 1, color: Color(0xFF2E2942)),
+              ),
+              for (var i = 0; i < destinations.length; i++)
+                _RailItem(
+                  destination: destinations[i],
+                  selected: i == selectedIndex,
+                  onTap: () => onSelected(i),
+                ),
+            ],
+          ),
+        ),
+        // Panel kedua.
+        Container(
+          width: 200,
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(right: _border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+                child: header,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                child: Text(
+                  destinations[selectedIndex].title.toUpperCase(),
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   children: [
-                    Icon(
-                      Icons.arrow_back_rounded,
-                      size: 18,
-                      color: AppColors.textMuted,
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      'Beranda',
-                      style: TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    for (var i = 0; i < subs.length; i++)
+                      _SubItem(
+                        sub: subs[i],
+                        selected: i == selectedSub,
+                        onTap: () => onSelectedSub(i),
                       ),
-                    ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 10, 20, 6),
-            child: Text(
-              'SERVER',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                for (var i = 0; i < destinations.length; i++)
-                  _ServerNavItem(
-                    destination: destinations[i],
-                    selected: i == selectedIndex,
-                    onTap: () => onSelected(i),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _ServerNavItem extends StatelessWidget {
-  const _ServerNavItem({
+class _RailItem extends StatelessWidget {
+  const _RailItem({
     required this.destination,
     required this.selected,
     required this.onTap,
@@ -544,38 +624,107 @@ class _ServerNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Tooltip(
+        message: destination.label,
+        waitDuration: const Duration(milliseconds: 400),
+        child: Material(
+          color: selected ? const Color(0x335865F2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Icon(
+                selected ? destination.selectedIcon : destination.icon,
+                size: 20,
+                color: selected ? AppColors.accent : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubItem extends StatelessWidget {
+  const _SubItem({
+    required this.sub,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _Sub sub;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     final color = selected ? AppColors.textPrimary : AppColors.textMuted;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 2),
       child: Material(
         color: selected ? const Color(0x335865F2) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                Icon(
-                  selected ? destination.selectedIcon : destination.icon,
-                  size: 18,
-                  color: selected ? AppColors.accent : color,
-                ),
-                const SizedBox(width: 12),
+                Icon(sub.icon, size: 16, color: color),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    destination.label,
+                    sub.label,
                     style: TextStyle(
                       color: color,
                       fontSize: 13,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Menu panel kedua versi HP: deretan chip di atas isi halaman.
+class _SubChips extends StatelessWidget {
+  const _SubChips({
+    required this.subs,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<_Sub> subs;
+  final int selected;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        itemCount: subs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, i) => ChoiceChip(
+          label: Text(subs[i].label),
+          selected: i == selected,
+          visualDensity: VisualDensity.compact,
+          labelStyle: const TextStyle(fontSize: 12),
+          onSelected: (_) => onSelected(i),
         ),
       ),
     );
