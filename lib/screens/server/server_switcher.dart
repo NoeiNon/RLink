@@ -18,11 +18,15 @@ class ServerSwitcher extends StatelessWidget {
     required this.username,
     required this.current,
     required this.memberships,
+    this.fill = false,
   });
 
   final String username;
   final ServerInfo current;
   final List<ServerMembership> memberships;
+
+  /// true = melebar penuh (dipakai di bagian atas sidebar, seperti Discord).
+  final bool fill;
 
   void _onSelected(BuildContext context, String value) {
     final navigator = Navigator.of(context);
@@ -51,7 +55,9 @@ class ServerSwitcher extends StatelessWidget {
 
       for (final membership in memberships) {
         if (membership.server.id != id) continue;
-        navigator.pushAndRemoveUntil(
+        // Ganti halaman server saat ini; beranda utama tetap ada di bawahnya
+        // supaya tombol "Beranda" tetap bisa kembali.
+        navigator.pushReplacement(
           MaterialPageRoute<void>(
             builder: (_) => ServerHomeScreen(
               username: username,
@@ -59,7 +65,6 @@ class ServerSwitcher extends StatelessWidget {
               role: membership.role,
             ),
           ),
-          (route) => false,
         );
         return;
       }
@@ -118,47 +123,50 @@ class ServerSwitcher extends StatelessWidget {
           ),
         ),
       ],
-      child: _Pill(server: current),
+      child: _Pill(server: current, fill: fill),
     );
   }
 }
 
 /// Bentuk tombol (pil) yang selalu terlihat di atas layar.
 class _Pill extends StatelessWidget {
-  const _Pill({required this.server});
+  const _Pill({required this.server, this.fill = false});
 
   final ServerInfo server;
+  final bool fill;
 
   @override
   Widget build(BuildContext context) {
+    final name = Text(
+      server.name,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: AppColors.textPrimary,
+        fontSize: fill ? 14 : 15,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 6, 10, 6),
+      padding: fill
+          ? const EdgeInsets.fromLTRB(8, 8, 8, 8)
+          : const EdgeInsets.fromLTRB(6, 6, 10, 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        color: fill ? const Color(0x1AFFFFFF) : AppColors.surface,
+        borderRadius: BorderRadius.circular(fill ? 12 : 24),
         border: Border.all(color: kFieldBorder),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
         children: [
           ServerAvatar(
             colorIndex: server.colorIndex,
             iconIndex: server.iconIndex,
-            size: 28,
+            size: fill ? 30 : 28,
           ),
           const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              server.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
+          fill ? Expanded(child: name) : Flexible(child: name),
           const SizedBox(width: 2),
           const Icon(
             Icons.keyboard_arrow_down_rounded,

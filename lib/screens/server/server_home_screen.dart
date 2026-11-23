@@ -70,8 +70,8 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
   }
 
   static const _beranda = _Destination(
-    label: 'Beranda',
-    title: 'Beranda',
+    label: 'Overview',
+    title: 'Overview',
     description: '',
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
@@ -358,37 +358,28 @@ class _ServerHomeScreenState extends State<ServerHomeScreen> {
             child: Row(
               children: [
                 _ServerSidebar(
+                  header: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ServerSwitcher(
+                        username: widget.username,
+                        current: widget.server,
+                        memberships: _memberships,
+                        fill: true,
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: _RoleBadge(isAdmin: _isAdmin),
+                      ),
+                    ],
+                  ),
                   destinations: _destinations,
                   selectedIndex: _index,
                   onSelected: (value) => setState(() => _index = value),
                   onBack: _backToDashboard,
                 ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      AppBar(
-                        backgroundColor: Colors.transparent,
-                        scrolledUnderElevation: 0,
-                        toolbarHeight: 52,
-                        titleSpacing: 16,
-                        centerTitle: false,
-                        title: Align(
-                          alignment: Alignment.centerLeft,
-                          child: ServerSwitcher(
-                            username: widget.username,
-                            current: widget.server,
-                            memberships: _memberships,
-                          ),
-                        ),
-                        actions: [
-                          _RoleBadge(isAdmin: _isAdmin),
-                          const SizedBox(width: 16),
-                        ],
-                      ),
-                      Expanded(child: content),
-                    ],
-                  ),
-                ),
+                Expanded(child: content),
               ],
             ),
           ),
@@ -452,12 +443,14 @@ class _CompactScope extends StatelessWidget {
 /// Sidebar kiri layar server: tombol kembali ke beranda dan tab server.
 class _ServerSidebar extends StatelessWidget {
   const _ServerSidebar({
+    required this.header,
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
     required this.onBack,
   });
 
+  final Widget header;
   final List<_Destination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
@@ -466,7 +459,7 @@ class _ServerSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 200,
+      width: 220,
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(right: BorderSide(color: Color(0xFF2E2942))),
@@ -474,8 +467,13 @@ class _ServerSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Ganti server di paling atas, seperti Discord.
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+            child: header,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: onBack,
