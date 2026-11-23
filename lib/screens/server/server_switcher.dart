@@ -4,6 +4,7 @@ import '../../core/app_theme.dart';
 import '../../data/mock_server_store.dart';
 import '../../models/server.dart';
 import '../../widgets/auth_layout.dart';
+import '../../widgets/compact_card_page.dart' show blurDialogRoute;
 import '../../widgets/server_avatar.dart';
 import '../create_server_screen.dart';
 import '../join_server_screen.dart';
@@ -33,18 +34,14 @@ class ServerSwitcher extends StatelessWidget {
 
     if (value == 'create') {
       navigator.push(
-        MaterialPageRoute<void>(
-          builder: (_) => CreateServerScreen(username: username),
-        ),
+        blurDialogRoute<void>((_) => CreateServerScreen(username: username)),
       );
       return;
     }
 
     if (value == 'join') {
       navigator.push(
-        MaterialPageRoute<void>(
-          builder: (_) => JoinServerScreen(username: username),
-        ),
+        blurDialogRoute<void>((_) => JoinServerScreen(username: username)),
       );
       return;
     }

@@ -76,12 +76,9 @@ class _JoinServerScreenState extends State<JoinServerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        title: const Text('Gabung server'),
-      ),
+      backgroundColor: Colors.transparent,
       body: CompactCardPage(
+        title: 'Gabung server',
         children: [
           Center(
             child: Container(

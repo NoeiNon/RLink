@@ -4,6 +4,7 @@ import '../../core/app_theme.dart';
 import '../../data/mock_server_store.dart';
 import '../../models/server.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
+import '../../widgets/compact_card_page.dart' show blurDialogRoute;
 import '../../widgets/server_avatar.dart';
 import '../create_server_screen.dart';
 import '../join_server_screen.dart';
@@ -19,7 +20,8 @@ class _ServersLoader extends StatefulWidget {
     BuildContext context,
     List<ServerMembership>? memberships,
     Future<void> Function(Route<void> route) open,
-  ) builder;
+  )
+  builder;
 
   @override
   State<_ServersLoader> createState() => _ServersLoaderState();
@@ -50,21 +52,16 @@ class _ServersLoaderState extends State<_ServersLoader> {
       widget.builder(context, _memberships, _open);
 }
 
-Route<void> _createRoute(String username) => MaterialPageRoute<void>(
-      builder: (_) => CreateServerScreen(username: username),
-    );
+Route<void> _createRoute(String username) =>
+    blurDialogRoute<void>((_) => CreateServerScreen(username: username));
 
-Route<void> _joinRoute(String username) => MaterialPageRoute<void>(
-      builder: (_) => JoinServerScreen(username: username),
-    );
+Route<void> _joinRoute(String username) =>
+    blurDialogRoute<void>((_) => JoinServerScreen(username: username));
 
 Route<void> _serverRoute(String username, ServerMembership m) =>
     MaterialPageRoute<void>(
-      builder: (_) => ServerHomeScreen(
-        username: username,
-        server: m.server,
-        role: m.role,
-      ),
+      builder: (_) =>
+          ServerHomeScreen(username: username, server: m.server, role: m.role),
     );
 
 /// Beranda: sapaan, aksi cepat, dan server milik akun.
@@ -120,7 +117,8 @@ class HomeTab extends StatelessWidget {
             const SizedBox(height: 12),
             const _SoonCard(
               icon: Icons.badge_outlined,
-              text: 'Kandidat dan peluang yang cocok denganmu akan tampil di '
+              text:
+                  'Kandidat dan peluang yang cocok denganmu akan tampil di '
                   'sini setelah fiturnya siap.',
             ),
           ],
@@ -356,7 +354,8 @@ class _ServerCards extends StatelessWidget {
     if (list.isEmpty) {
       return const _SoonCard(
         icon: Icons.dns_outlined,
-        text: 'Kamu belum bergabung di server mana pun. Buat server baru atau '
+        text:
+            'Kamu belum bergabung di server mana pun. Buat server baru atau '
             'gabung pakai token.',
       );
     }

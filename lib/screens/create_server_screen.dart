@@ -85,12 +85,9 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        title: const Text('Buat server'),
-      ),
+      backgroundColor: Colors.transparent,
       body: CompactCardPage(
+        title: 'Buat server',
         children: [
           Center(
             child: ServerAvatar(
@@ -200,7 +197,11 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
             width: selected ? 2 : 1,
           ),
         ),
-        child: Icon(kServerIcons[index], size: 18, color: AppColors.textPrimary),
+        child: Icon(
+          kServerIcons[index],
+          size: 18,
+          color: AppColors.textPrimary,
+        ),
       ),
     );
   }
