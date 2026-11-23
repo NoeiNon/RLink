@@ -505,7 +505,9 @@ class _CompactScope extends StatelessWidget {
 
 /// Sidebar dua tingkat seperti Supabase: rel ikon di kiri (bagian server),
 /// lalu panel kedua berisi menu milik bagian yang dipilih.
-class _ServerSidebar extends StatelessWidget {
+/// Rel ikon tertutup (hanya ikon); saat disorot mouse ia melebar menimpa
+/// panel kedua dan menampilkan nama tiap menu, lalu menutup lagi.
+class _ServerSidebar extends StatefulWidget {
   const _ServerSidebar({
     required this.header,
     required this.destinations,
@@ -526,84 +528,124 @@ class _ServerSidebar extends StatelessWidget {
   final ValueChanged<int> onSelectedSub;
   final VoidCallback onBack;
 
+  @override
+  State<_ServerSidebar> createState() => _ServerSidebarState();
+}
+
+class _ServerSidebarState extends State<_ServerSidebar> {
   static const _border = BorderSide(color: Color(0xFF2E2942));
+  static const _railClosed = 56.0;
+  static const _railOpen = 184.0;
+
+  bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final destinations = widget.destinations;
+
+    return Stack(
       children: [
-        // Rel ikon.
-        Container(
-          width: 56,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(right: _border),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              IconButton(
-                tooltip: 'Kembali ke beranda',
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                  size: 20,
-                  color: AppColors.textMuted,
-                ),
-                onPressed: onBack,
+        // Tata letak tetap: ruang rel tertutup + panel kedua.
+        Row(
+          children: [
+            const SizedBox(width: _railClosed),
+            Container(
+              width: 200,
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(right: _border),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Divider(height: 1, color: Color(0xFF2E2942)),
-              ),
-              for (var i = 0; i < destinations.length; i++)
-                _RailItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onSelected(i),
-                ),
-            ],
-          ),
-        ),
-        // Panel kedua.
-        Container(
-          width: 200,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(right: _border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
-                child: header,
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-                child: Text(
-                  destinations[selectedIndex].title.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+                    child: widget.header,
                   ),
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: [
-                    for (var i = 0; i < subs.length; i++)
-                      _SubItem(
-                        sub: subs[i],
-                        selected: i == selectedSub,
-                        onTap: () => onSelectedSub(i),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                    child: Text(
+                      destinations[widget.selectedIndex].title.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      children: [
+                        for (var i = 0; i < widget.subs.length; i++)
+                          _SubItem(
+                            sub: widget.subs[i],
+                            selected: i == widget.selectedSub,
+                            onTap: () => widget.onSelectedSub(i),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          ],
+        ),
+        // Rel ikon: melebar di atas panel kedua saat disorot.
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          child: MouseRegion(
+            onEnter: (_) => setState(() => _hover = true),
+            onExit: (_) => setState(() => _hover = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOut,
+              width: _hover ? _railOpen : _railClosed,
+              clipBehavior: Clip.hardEdge,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: const Border(right: _border),
+                boxShadow: _hover
+                    ? const [
+                        BoxShadow(
+                          color: Color(0x66000000),
+                          blurRadius: 16,
+                          offset: Offset(4, 0),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 10),
+                  _RailItem(
+                    icon: Icons.arrow_back_rounded,
+                    label: 'Kembali ke beranda',
+                    expanded: _hover,
+                    selected: false,
+                    onTap: widget.onBack,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Divider(height: 1, color: Color(0xFF2E2942)),
+                  ),
+                  for (var i = 0; i < destinations.length; i++)
+                    _RailItem(
+                      icon: i == widget.selectedIndex
+                          ? destinations[i].selectedIcon
+                          : destinations[i].icon,
+                      label: destinations[i].label,
+                      expanded: _hover,
+                      selected: i == widget.selectedIndex,
+                      onTap: () => widget.onSelected(i),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -613,36 +655,54 @@ class _ServerSidebar extends StatelessWidget {
 
 class _RailItem extends StatelessWidget {
   const _RailItem({
-    required this.destination,
+    required this.icon,
+    required this.label,
+    required this.expanded,
     required this.selected,
     required this.onTap,
   });
 
-  final _Destination destination;
+  final IconData icon;
+  final String label;
+  final bool expanded;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final color = selected ? AppColors.accent : AppColors.textMuted;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Tooltip(
-        message: destination.label,
-        waitDuration: const Duration(milliseconds: 400),
-        child: Material(
-          color: selected ? const Color(0x335865F2) : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+      child: Material(
+        color: selected ? const Color(0x335865F2) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: onTap,
-            child: SizedBox(
-              width: 38,
-              height: 38,
-              child: Icon(
-                selected ? destination.selectedIcon : destination.icon,
-                size: 20,
-                color: selected ? AppColors.accent : AppColors.textMuted,
-              ),
+          onTap: onTap,
+          child: SizedBox(
+            height: 38,
+            child: Row(
+              children: [
+                SizedBox(width: 38, child: Icon(icon, size: 20, color: color)),
+                if (expanded)
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        color: selected
+                            ? AppColors.textPrimary
+                            : AppColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
