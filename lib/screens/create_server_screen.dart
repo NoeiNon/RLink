@@ -5,8 +5,10 @@ import '../core/validators.dart';
 import '../data/mock_server_store.dart';
 import '../models/server.dart';
 import '../widgets/app_feedback.dart';
-import '../widgets/auth_layout.dart';
-import '../widgets/page_body.dart';
+import '../widgets/auth_layout.dart' show kFieldBorder;
+import '../widgets/auth_split_layout.dart'
+    show CompactButton, compactInputDecoration;
+import '../widgets/compact_card_page.dart';
 import '../widgets/server_avatar.dart';
 import 'server/server_home_screen.dart';
 
@@ -88,22 +90,22 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
         scrolledUnderElevation: 0,
         title: const Text('Buat server'),
       ),
-      body: PageBody(
+      body: CompactCardPage(
         children: [
           Center(
             child: ServerAvatar(
               colorIndex: _colorIndex,
               iconIndex: _iconIndex,
-              size: 96,
+              size: 64,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           const Text(
             'Atur tampilan servermu',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           Form(
             key: _formKey,
             child: TextFormField(
@@ -111,44 +113,45 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
-              decoration: appInputDecoration(
+              style: const TextStyle(fontSize: 13.5),
+              decoration: compactInputDecoration(
                 label: 'Nama server',
                 icon: Icons.dns_outlined,
               ),
               validator: Validators.serverName,
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
           const _SectionLabel('Warna'),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               for (var i = 0; i < kServerColors.length; i++) _colorSwatch(i),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
           const _SectionLabel('Ikon'),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               for (var i = 0; i < kServerIcons.length; i++) _iconOption(i),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           const _InfoNote(
             'Kamu otomatis jadi boss di server ini. Token undangan dibuat '
             'otomatis dan bisa disalin dari halaman server.',
           ),
           if (_error != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             InlineError(_error!),
           ],
-          const SizedBox(height: 20),
-          PrimaryButton(
+          const SizedBox(height: 16),
+          CompactButton(
             label: 'Buat server',
             loading: _loading,
             onPressed: _submit,
@@ -164,18 +167,18 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
     return GestureDetector(
       onTap: () => setState(() => _colorIndex = index),
       child: Container(
-        width: 40,
-        height: 40,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
           color: kServerColors[index],
           shape: BoxShape.circle,
           border: Border.all(
             color: selected ? AppColors.textPrimary : Colors.transparent,
-            width: 3,
+            width: 2,
           ),
         ),
         child: selected
-            ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+            ? const Icon(Icons.check_rounded, color: Colors.white, size: 15)
             : null,
       ),
     );
@@ -187,17 +190,17 @@ class _CreateServerScreenState extends State<CreateServerScreen> {
     return GestureDetector(
       onTap: () => setState(() => _iconIndex = index),
       child: Container(
-        width: 48,
-        height: 48,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: selected ? const Color(0x335865F2) : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: selected ? const Color(0x335865F2) : AppColors.background,
+          borderRadius: BorderRadius.circular(9),
           border: Border.all(
             color: selected ? AppColors.primary : kFieldBorder,
             width: selected ? 2 : 1,
           ),
         ),
-        child: Icon(kServerIcons[index], color: AppColors.textPrimary),
+        child: Icon(kServerIcons[index], size: 18, color: AppColors.textPrimary),
       ),
     );
   }
@@ -214,7 +217,7 @@ class _SectionLabel extends StatelessWidget {
       text,
       style: const TextStyle(
         color: AppColors.textPrimary,
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -229,10 +232,10 @@ class _InfoNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +251,7 @@ class _InfoNote extends StatelessWidget {
               text,
               style: const TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 13,
+                fontSize: 12,
                 height: 1.4,
               ),
             ),

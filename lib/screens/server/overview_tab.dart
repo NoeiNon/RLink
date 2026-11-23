@@ -665,10 +665,10 @@ class _InputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        16,
-        8,
-        8,
-        8 + MediaQuery.paddingOf(context).bottom,
+        12,
+        6,
+        6,
+        6 + MediaQuery.paddingOf(context).bottom,
       ),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: kFieldBorder)),
@@ -677,22 +677,36 @@ class _InputBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              minLines: 1,
-              maxLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: 'Tulis pesan...',
-                filled: true,
-                fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+            // Enter = kirim (PC/web), Shift+Enter = baris baru.
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.enter &&
+                    !HardwareKeyboard.instance.isShiftPressed) {
+                  if (!sending) onSend();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: 4,
+                style: const TextStyle(fontSize: 13),
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: 'Tulis pesan...',
+                  isDense: true,
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
@@ -700,8 +714,9 @@ class _InputBar extends StatelessWidget {
           const SizedBox(width: 4),
           IconButton.filled(
             tooltip: 'Kirim',
+            visualDensity: VisualDensity.compact,
             onPressed: sending ? null : onSend,
-            icon: const Icon(Icons.send_rounded),
+            icon: const Icon(Icons.send_rounded, size: 18),
           ),
         ],
       ),

@@ -4,8 +4,9 @@ import '../core/app_theme.dart';
 import '../core/validators.dart';
 import '../data/mock_server_store.dart';
 import '../models/server.dart';
-import '../widgets/auth_layout.dart';
-import '../widgets/page_body.dart';
+import '../widgets/auth_split_layout.dart'
+    show CompactButton, compactInputDecoration;
+import '../widgets/compact_card_page.dart';
 import 'server/server_home_screen.dart';
 
 /// Gabung server: tempel token dari admin, lalu konfirmasi.
@@ -80,46 +81,45 @@ class _JoinServerScreenState extends State<JoinServerScreen> {
         scrolledUnderElevation: 0,
         title: const Text('Gabung server'),
       ),
-      body: PageBody(
-        center: true,
+      body: CompactCardPage(
         children: [
           Center(
             child: Container(
-              width: 84,
-              height: 84,
+              width: 60,
+              height: 60,
               decoration: const BoxDecoration(
                 color: Color(0x33B69CFF),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.vpn_key_outlined,
-                size: 38,
+                size: 28,
                 color: AppColors.accent,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           const Text(
             'Masukkan token server',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           const Text(
             'Minta token ke boss servermu, lalu tempel di bawah. '
             'Kamu akan bergabung sebagai Builder.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: AppColors.textMuted,
-              fontSize: 14,
+              fontSize: 12.5,
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           Form(
             key: _formKey,
             child: TextFormField(
@@ -131,24 +131,25 @@ class _JoinServerScreenState extends State<JoinServerScreen> {
                 if (_error != null) setState(() => _error = null);
               },
               onFieldSubmitted: (_) => _submit(),
-              decoration: appInputDecoration(
+              style: const TextStyle(fontSize: 13.5),
+              decoration: compactInputDecoration(
                 label: 'Token server',
                 icon: Icons.vpn_key_outlined,
               ).copyWith(errorText: _error),
               validator: Validators.token,
             ),
           ),
-          const SizedBox(height: 20),
-          PrimaryButton(
+          const SizedBox(height: 16),
+          CompactButton(
             label: 'Konfirmasi',
             loading: _loading,
             onPressed: _submit,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           const Text(
             'Mode demo: coba token ETHARIA1',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
           ),
         ],
       ),
