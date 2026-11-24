@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
 import '../../widgets/auth_layout.dart' show AppLogo, kFieldBorder;
+import '../guest_gate.dart' show GuestAuthButtons;
 
 /// Satu tab navigasi di dashboard.
 class DashboardTab {
@@ -30,8 +31,6 @@ class DashboardSidebar extends StatelessWidget {
     required this.username,
     required this.onProfile,
     required this.onLogout,
-    this.onLogin,
-    this.onRegister,
   });
 
   final int index;
@@ -39,10 +38,6 @@ class DashboardSidebar extends StatelessWidget {
   final String username;
   final VoidCallback onProfile;
   final VoidCallback onLogout;
-
-  /// Dipakai saat pengunjung belum login (username kosong).
-  final VoidCallback? onLogin;
-  final VoidCallback? onRegister;
 
   @override
   Widget build(BuildContext context) {
@@ -73,22 +68,9 @@ class DashboardSidebar extends StatelessWidget {
             ),
             const Divider(height: 1, color: kFieldBorder),
             if (username.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    FilledButton(
-                      onPressed: onLogin,
-                      child: const Text('Masuk'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: onRegister,
-                      child: const Text('Daftar'),
-                    ),
-                  ],
-                ),
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: GuestAuthButtons(),
               )
             else
               _ProfileCard(

@@ -1,13 +1,65 @@
 import 'package:flutter/material.dart';
 
 import '../../core/app_theme.dart';
+import '../../data/cv_store.dart';
+import '../../models/cv.dart';
 import '../../widgets/auth_layout.dart' show kFieldBorder;
+import 'cv_screen.dart';
 
-/// Profil pengguna. Pengaturan akun dan pembuat CV menyusul.
-class ProfileScreen extends StatelessWidget {
+/// Profil pengguna. Pengaturan akun menyusul.
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.username});
 
   final String username;
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  CvData? _cv;
+  bool _cvLoading = true;
+
+  String get username => widget.username;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCv();
+  }
+
+  Future<void> _loadCv() async {
+    CvData? cv;
+    try {
+      cv = await CvStore.load(username);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _cv = cv;
+      _cvLoading = false;
+    });
+  }
+
+  Future<void> _openCv() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<bool>(builder: (_) => CvScreen(username: username)),
+    );
+    if (mounted) await _loadCv();
+  }
+
+  String _cvStatus() {
+    if (_cvLoading) return 'Memuat...';
+    final cv = _cv;
+    if (cv == null) {
+      return 'Belum ada CV. Isi dulu supaya bisa langsung apply ke company.';
+    }
+    final t = cv.updatedAt;
+    String two(int v) => v.toString().padLeft(2, '0');
+    final when = t == null
+        ? ''
+        : ' Diperbarui ${two(t.day)}/${two(t.month)}/${t.year}.';
+    return 'CV sudah terisi.$when';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +115,10 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: kFieldBorder),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'CV',
                           style: TextStyle(
                             color: AppColors.textPrimary,
@@ -74,39 +126,30 @@ class ProfileScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
-                          'Buat CV-mu di sini, lalu publikasikan supaya '
-                          'perusahaan dan tim bisa menemukan dan memilihmu '
-                          'sebagai kandidat.',
-                          style: TextStyle(
+                          _cvStatus(),
+                          style: const TextStyle(
                             color: AppColors.textMuted,
                             fontSize: 13,
                             height: 1.4,
                           ),
                         ),
-                        SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Publikasikan CV',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                            Switch(value: false, onChanged: null),
-                          ],
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Segera hadir',
+                        const SizedBox(height: 4),
+                        const Text(
+                          'CV hanya terlihat olehmu. Saat kamu apply ke '
+                          'sebuah company, salinannya terkirim ke boss '
+                          'company itu saja.',
                           style: TextStyle(
                             color: AppColors.textMuted,
                             fontSize: 12,
+                            height: 1.4,
                           ),
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton(
+                          onPressed: _cvLoading ? null : _openCv,
+                          child: Text(_cv == null ? 'Isi CV' : 'Edit CV'),
                         ),
                       ],
                     ),

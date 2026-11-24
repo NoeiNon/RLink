@@ -119,20 +119,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _rightPanel() {
-    if (_guest) {
-      return Container(
-        width: 300,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(left: BorderSide(color: kFieldBorder)),
-        ),
-        child: const GuestPrompt(
-          icon: Icons.chat_bubble_outline_rounded,
-          title: 'Pesan, notifikasi, jadwal',
-          message: 'Masuk untuk mulai memakainya.',
-        ),
-      );
-    }
     return DashboardRightPanel(
       key: ValueKey(_rightTab),
       initialTab: _rightTab,
@@ -179,8 +165,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           username: widget.username,
           onProfile: _openProfile,
           onLogout: () => logoutToLogin(context),
-          onLogin: () => openLoginFromGuest(context),
-          onRegister: () => openRegisterFromGuest(context),
         );
 
         return Scaffold(
@@ -192,28 +176,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   backgroundColor: AppColors.surface,
                   scrolledUnderElevation: 0,
                   centerTitle: true,
-                  leading: IconButton(
-                    tooltip: 'Profil',
-                    icon: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: AppColors.primary,
-                      child: Text(
-                        widget.username.isEmpty
-                            ? '?'
-                            : widget.username[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                  leading: _guest
+                      ? null
+                      : IconButton(
+                          tooltip: 'Profil',
+                          icon: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: AppColors.primary,
+                            child: Text(
+                              widget.username.isEmpty
+                                  ? '?'
+                                  : widget.username[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          onPressed: _openProfile,
                         ),
-                      ),
-                    ),
-                    onPressed: _openProfile,
-                  ),
                   title: const AppLogo(width: 36),
-                  actions: [_panelButtons()],
+                  actions: [
+                    if (_guest)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 12),
+                        child: GuestAuthButtons(expand: false),
+                      )
+                    else
+                      _panelButtons(),
+                  ],
                 ),
-          endDrawer: wide
+          endDrawer: wide || _guest
               ? null
               : Drawer(
                   width: 300,
@@ -242,7 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: Column(
                         children: [
-                          if (!wide)
+                          if (!wide && !_guest)
                             Container(
                               height: 52,
                               padding: const EdgeInsets.symmetric(
@@ -262,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-                    if (wide) _rightPanel(),
+                    if (wide && !_guest) _rightPanel(),
                   ],
                 )
               : _content(),

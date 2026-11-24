@@ -95,20 +95,55 @@ class GuestPrompt extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => openLoginFromGuest(context),
-                child: const Text('Masuk'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => openRegisterFromGuest(context),
-                child: const Text('Daftar'),
-              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Tombol Masuk dan Daftar untuk pengunjung. Hanya satu tempat per tampilan:
+/// bawah sidebar (layar lebar) atau bar atas (HP).
+class GuestAuthButtons extends StatelessWidget {
+  const GuestAuthButtons({super.key, this.expand = true});
+
+  /// true = memenuhi lebar yang tersedia (sidebar); false = ringkas (bar atas).
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = WidgetStatePropertyAll<OutlinedBorder>(
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+    final size = WidgetStatePropertyAll<Size>(Size(expand ? 0 : 72, 36));
+    const text = WidgetStatePropertyAll<TextStyle>(
+      TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+    );
+
+    final login = OutlinedButton(
+      style: ButtonStyle(shape: shape, minimumSize: size, textStyle: text),
+      onPressed: () => openLoginFromGuest(context),
+      child: const Text('Masuk'),
+    );
+    final register = FilledButton(
+      style: ButtonStyle(shape: shape, minimumSize: size, textStyle: text),
+      onPressed: () => openRegisterFromGuest(context),
+      child: const Text('Daftar'),
+    );
+
+    if (!expand) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [login, const SizedBox(width: 8), register],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: login),
+        const SizedBox(width: 8),
+        Expanded(child: register),
+      ],
     );
   }
 }
