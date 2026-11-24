@@ -1,4 +1,4 @@
-import '../data/mock_server_store.dart' show ServerException;
+import '../features/server/data/mock_server_store.dart' show ServerException;
 
 /// Dilempar saat email belum terdaftar, supaya layar login bisa mengarahkan
 /// pengguna ke halaman Daftar.

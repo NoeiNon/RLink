@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/app_constants.dart';
 import '../core/app_theme.dart';
 import '../widgets/auth_layout.dart';
-import 'app_router.dart';
-import 'create_server_screen.dart';
-import 'join_server_screen.dart';
+import '../features/auth/app_router.dart';
+import '../features/server/screens/create_server_screen.dart';
+import '../features/server/screens/join_server_screen.dart';
 
 /// Halaman depan untuk akun yang belum punya server (seperti Discord saat
 /// baru daftar). Dua pilihan: buat server sendiri (jadi admin) atau gabung

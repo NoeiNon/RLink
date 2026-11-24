@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/app_constants.dart';
 import 'core/app_theme.dart';
 import 'core/supabase_config.dart';
-import 'screens/splash_screen.dart';
+import 'features/auth/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

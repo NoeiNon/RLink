@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../data/supabase_auth_store.dart';
+import '../features/auth/supabase_auth_store.dart';
 import 'supabase_config.dart';
 
 /// Pengelola sesi login dengan batas tidak aktif (AFK) 7 hari (rolling window).
