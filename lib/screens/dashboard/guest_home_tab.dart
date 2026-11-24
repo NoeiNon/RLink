@@ -49,25 +49,25 @@ class GuestHomeTab extends StatelessWidget {
                         Icons.work_outline_rounded,
                         'Lowongan',
                         'Lihat company yang sedang merekrut.',
-                        1,
+                        2,
                       ),
                       (
                         Icons.business_rounded,
                         'Perusahaan & Tim',
                         'Kenali company dan tim yang ada.',
-                        2,
+                        3,
                       ),
                       (
                         Icons.handshake_outlined,
                         'Freelance',
                         'Cari atau tawarkan jasa tanpa harus masuk company.',
-                        3,
+                        4,
                       ),
                       (
                         Icons.storefront_rounded,
                         'Store',
                         'Jual barangmu atau cari dari penjual lain.',
-                        4,
+                        5,
                       ),
                     ])
                       SizedBox(

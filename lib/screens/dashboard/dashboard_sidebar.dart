@@ -13,8 +13,13 @@ class DashboardTab {
   final IconData icon;
 }
 
+/// Indeks tab Pesan. Di HP tab ini tidak masuk navigasi bawah (ikon chat di
+/// bar atas yang membukanya), supaya navigasi bawah tidak sesak.
+const int kMessagesTabIndex = 1;
+
 const List<DashboardTab> kDashboardTabs = [
   DashboardTab('Beranda', 'Beranda', Icons.home_rounded),
+  DashboardTab('Pesan', 'Pesan', Icons.chat_bubble_outline_rounded),
   DashboardTab('Lowongan', 'Lowongan', Icons.work_outline_rounded),
   DashboardTab('Perusahaan & Tim', 'Tim', Icons.business_rounded),
   DashboardTab('Freelance', 'Freelance', Icons.handshake_outlined),

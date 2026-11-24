@@ -9,6 +9,7 @@ import 'dashboard_right_panel.dart';
 import 'dashboard_sidebar.dart';
 import 'guest_home_tab.dart';
 import 'home_tab.dart';
+import 'messages_tab.dart';
 import 'profile_screen.dart';
 
 /// Beranda utama aplikasi. Layar lebar: sidebar kiri (navigasi + profil),
@@ -30,7 +31,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   int _index = 0;
-  int _rightTab = 0;
   final List<ScheduleItem> _events = [];
 
   bool get _guest => widget.username.isEmpty;
@@ -50,16 +50,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _openRightPanel(int tab) {
+  void _openSchedule() {
     if (_guest) {
-      promptLogin(
-        context,
-        message: 'Masuk untuk memakai pesan, notifikasi, dan jadwal.',
-      );
+      promptLogin(context, message: 'Masuk untuk memakai jadwal.');
       return;
     }
-    setState(() => _rightTab = tab);
     _scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  void _openNotifications() {
+    if (_guest) {
+      promptLogin(context, message: 'Masuk untuk melihat notifikasi.');
+      return;
+    }
+    showNotificationsDialog(context, _events);
+  }
+
+  /// HP: Pesan dibuka sebagai halaman sendiri dari ikon di bar atas.
+  void _openMessages() {
+    if (_guest) {
+      promptLogin(context, message: 'Masuk untuk memakai pesan.');
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            title: const Text(
+              'Pesan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          body: const MessagesTab(),
+        ),
+      ),
+    );
   }
 
   Widget _content() {
@@ -70,9 +97,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         return HomeTab(
           username: widget.username,
-          onOpenServers: () => setState(() => _index = 5),
+          onOpenServers: () => setState(() => _index = 6),
         );
       case 1:
+        if (_guest) {
+          return const GuestPrompt(
+            icon: Icons.chat_bubble_outline_rounded,
+            title: 'Pesan',
+            message: 'Masuk untuk mengirim dan menerima pesan.',
+          );
+        }
+        return const MessagesTab();
+      case 2:
         return const PlaceholderTab(
           icon: Icons.work_outline_rounded,
           title: 'Lowongan',
@@ -80,7 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Lihat company yang sedang merekrut, pilih yang cocok, '
               'lalu apply. CV dari profilmu terkirim otomatis ke boss.',
         );
-      case 2:
+      case 3:
         return const PlaceholderTab(
           icon: Icons.business_rounded,
           title: 'Perusahaan & Tim',
@@ -88,7 +124,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Temukan perusahaan dan tim yang sedang membuka '
               'kesempatan, lengkap dengan profilnya.',
         );
-      case 3:
+      case 4:
         return const PlaceholderTab(
           icon: Icons.handshake_outlined,
           title: 'Freelance',
@@ -96,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Papan iklan jasa dari orang ke orang, tanpa harus '
               'masuk company. Iklan berbayar tampil di urutan atas.',
         );
-      case 4:
+      case 5:
         return const PlaceholderTab(
           icon: Icons.storefront_rounded,
           title: 'Store',
@@ -120,32 +156,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _rightPanel() {
     return DashboardRightPanel(
-      key: ValueKey(_rightTab),
-      initialTab: _rightTab,
       events: _events,
       onAddEvent: (event) => setState(() => _events.add(event)),
       onRemoveEvent: (event) => setState(() => _events.remove(event)),
     );
   }
 
-  Widget _panelButtons() {
+  Widget _panelButtons({bool chat = true}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          tooltip: 'Pesan',
-          icon: const Icon(Icons.chat_bubble_outline_rounded),
-          onPressed: () => _openRightPanel(0),
-        ),
+        if (chat)
+          IconButton(
+            tooltip: 'Pesan',
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            onPressed: _openMessages,
+          ),
         IconButton(
           tooltip: 'Notifikasi',
           icon: const Icon(Icons.notifications_none_rounded),
-          onPressed: () => _openRightPanel(1),
+          onPressed: _openNotifications,
         ),
         IconButton(
           tooltip: 'Jadwal',
           icon: const Icon(Icons.event_outlined),
-          onPressed: () => _openRightPanel(2),
+          onPressed: _openSchedule,
         ),
       ],
     );
@@ -218,15 +253,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? null
               : NavigationBar(
                   backgroundColor: AppColors.surface,
-                  selectedIndex: _index,
-                  onDestinationSelected: (i) => setState(() => _index = i),
+                  // Pesan tidak ada di navigasi bawah, jadi indeksnya digeser.
+                  selectedIndex: _index > kMessagesTabIndex ? _index - 1 : 0,
+                  onDestinationSelected: (i) => setState(
+                    () => _index = i >= kMessagesTabIndex ? i + 1 : i,
+                  ),
                   labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   destinations: [
-                    for (final tab in kDashboardTabs)
-                      NavigationDestination(
-                        icon: Icon(tab.icon),
-                        label: tab.shortLabel,
-                      ),
+                    for (var t = 0; t < kDashboardTabs.length; t++)
+                      if (t != kMessagesTabIndex)
+                        NavigationDestination(
+                          icon: Icon(kDashboardTabs[t].icon),
+                          label: kDashboardTabs[t].shortLabel,
+                        ),
                   ],
                 ),
           body: medium
@@ -249,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
-                                children: [_panelButtons()],
+                                children: [_panelButtons(chat: false)],
                               ),
                             ),
                           Expanded(child: _content()),
