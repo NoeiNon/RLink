@@ -11,7 +11,10 @@ import 'app_router.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.allowBack = false});
+
+  /// true = dibuka dari beranda tamu, jadi ada tombol kembali.
+  final bool allowBack;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -108,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthSplitLayout(
+      showBack: widget.allowBack,
       title: 'Selamat datang',
       subtitle: 'Temukan peluang, rekan, dan komunitasmu di sini.',
       footer: Row(

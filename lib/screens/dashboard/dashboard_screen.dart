@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/auth_layout.dart' show AppLogo, kFieldBorder;
 import '../app_router.dart';
+import '../guest_gate.dart';
 import '../server/placeholder_tab.dart';
 import 'dashboard_right_panel.dart';
 import 'dashboard_sidebar.dart';
+import 'guest_home_tab.dart';
 import 'home_tab.dart';
 import 'profile_screen.dart';
 
@@ -31,7 +33,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _rightTab = 0;
   final List<ScheduleItem> _events = [];
 
+  bool get _guest => widget.username.isEmpty;
+
   void _openProfile() {
+    if (_guest) {
+      promptLogin(
+        context,
+        message: 'Masuk untuk melihat dan mengisi profilmu.',
+      );
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ProfileScreen(username: widget.username),
@@ -40,6 +51,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _openRightPanel(int tab) {
+    if (_guest) {
+      promptLogin(
+        context,
+        message: 'Masuk untuk memakai pesan, notifikasi, dan jadwal.',
+      );
+      return;
+    }
     setState(() => _rightTab = tab);
     _scaffoldKey.currentState?.openEndDrawer();
   }
@@ -47,37 +65,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _content() {
     switch (_index) {
       case 0:
+        if (_guest) {
+          return GuestHomeTab(onOpenTab: (i) => setState(() => _index = i));
+        }
         return HomeTab(
           username: widget.username,
-          onOpenServers: () => setState(() => _index = 4),
+          onOpenServers: () => setState(() => _index = 5),
         );
       case 1:
         return const PlaceholderTab(
-          icon: Icons.badge_outlined,
-          title: 'Kandidat',
-          description: 'Jelajahi kandidat yang sudah mempublikasikan CV-nya, '
-              'lalu pilih yang cocok untuk tim atau perusahaanmu.',
+          icon: Icons.work_outline_rounded,
+          title: 'Lowongan',
+          description:
+              'Lihat company yang sedang merekrut, pilih yang cocok, '
+              'lalu apply. CV dari profilmu terkirim otomatis ke boss.',
         );
       case 2:
         return const PlaceholderTab(
           icon: Icons.business_rounded,
           title: 'Perusahaan & Tim',
-          description: 'Temukan perusahaan dan tim yang sedang membuka '
+          description:
+              'Temukan perusahaan dan tim yang sedang membuka '
               'kesempatan, lengkap dengan profilnya.',
         );
       case 3:
         return const PlaceholderTab(
+          icon: Icons.handshake_outlined,
+          title: 'Freelance',
+          description:
+              'Papan iklan jasa dari orang ke orang, tanpa harus '
+              'masuk company. Iklan berbayar tampil di urutan atas.',
+        );
+      case 4:
+        return const PlaceholderTab(
           icon: Icons.storefront_rounded,
           title: 'Store',
-          description: 'Jual barangmu atau jadi supplier, dan cari barang '
+          description:
+              'Jual barangmu atau jadi supplier, dan cari barang '
               'dari penjual lain.',
         );
       default:
+        if (_guest) {
+          return const GuestPrompt(
+            icon: Icons.dns_rounded,
+            title: 'Server milikmu',
+            message:
+                'Masuk untuk membuat server atau melihat server yang '
+                'kamu ikuti.',
+          );
+        }
         return ServersTab(username: widget.username);
     }
   }
 
   Widget _rightPanel() {
+    if (_guest) {
+      return Container(
+        width: 300,
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(left: BorderSide(color: kFieldBorder)),
+        ),
+        child: const GuestPrompt(
+          icon: Icons.chat_bubble_outline_rounded,
+          title: 'Pesan, notifikasi, jadwal',
+          message: 'Masuk untuk mulai memakainya.',
+        ),
+      );
+    }
     return DashboardRightPanel(
       key: ValueKey(_rightTab),
       initialTab: _rightTab,
@@ -124,6 +179,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           username: widget.username,
           onProfile: _openProfile,
           onLogout: () => logoutToLogin(context),
+          onLogin: () => openLoginFromGuest(context),
+          onRegister: () => openRegisterFromGuest(context),
         );
 
         return Scaffold(
@@ -169,8 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   backgroundColor: AppColors.surface,
                   selectedIndex: _index,
                   onDestinationSelected: (i) => setState(() => _index = i),
-                  labelBehavior:
-                      NavigationDestinationLabelBehavior.alwaysShow,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   destinations: [
                     for (final tab in kDashboardTabs)
                       NavigationDestination(

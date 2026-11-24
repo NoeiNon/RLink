@@ -14,8 +14,9 @@ class DashboardTab {
 
 const List<DashboardTab> kDashboardTabs = [
   DashboardTab('Beranda', 'Beranda', Icons.home_rounded),
-  DashboardTab('Kandidat', 'Kandidat', Icons.badge_outlined),
+  DashboardTab('Lowongan', 'Lowongan', Icons.work_outline_rounded),
   DashboardTab('Perusahaan & Tim', 'Tim', Icons.business_rounded),
+  DashboardTab('Freelance', 'Freelance', Icons.handshake_outlined),
   DashboardTab('Store', 'Store', Icons.storefront_rounded),
   DashboardTab('Server', 'Server', Icons.dns_rounded),
 ];
@@ -29,6 +30,8 @@ class DashboardSidebar extends StatelessWidget {
     required this.username,
     required this.onProfile,
     required this.onLogout,
+    this.onLogin,
+    this.onRegister,
   });
 
   final int index;
@@ -36,6 +39,10 @@ class DashboardSidebar extends StatelessWidget {
   final String username;
   final VoidCallback onProfile;
   final VoidCallback onLogout;
+
+  /// Dipakai saat pengunjung belum login (username kosong).
+  final VoidCallback? onLogin;
+  final VoidCallback? onRegister;
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +72,30 @@ class DashboardSidebar extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: kFieldBorder),
-            _ProfileCard(
-              username: username,
-              onProfile: onProfile,
-              onLogout: onLogout,
-            ),
+            if (username.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton(
+                      onPressed: onLogin,
+                      child: const Text('Masuk'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: onRegister,
+                      child: const Text('Daftar'),
+                    ),
+                  ],
+                ),
+              )
+            else
+              _ProfileCard(
+                username: username,
+                onProfile: onProfile,
+                onLogout: onLogout,
+              ),
           ],
         ),
       ),
@@ -103,7 +129,11 @@ class _SidebarItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             child: Row(
               children: [
-                Icon(tab.icon, size: 19, color: selected ? AppColors.accent : color),
+                Icon(
+                  tab.icon,
+                  size: 19,
+                  color: selected ? AppColors.accent : color,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

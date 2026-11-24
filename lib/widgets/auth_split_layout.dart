@@ -18,12 +18,17 @@ class AuthSplitLayout extends StatelessWidget {
   final List<Widget> children;
   final Widget? footer;
 
+  /// Tombol kembali di pojok kiri atas. Hanya untuk pengunjung yang datang
+  /// dari beranda tamu; login/register biasa tetap tanpa tombol kembali.
+  final bool showBack;
+
   const AuthSplitLayout({
     super.key,
     required this.title,
     required this.children,
     this.subtitle,
     this.footer,
+    this.showBack = false,
   });
 
   @override
@@ -60,6 +65,17 @@ class AuthSplitLayout extends StatelessWidget {
               ),
             ),
           ),
+          if (showBack)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: IconButton(
+                  tooltip: 'Kembali',
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ),
+            ),
         ],
       ),
     );
